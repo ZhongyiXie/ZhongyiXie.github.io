@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.8; color: #2d3436; max-width: 900px; margin: 0 auto; padding: 32px 40px; }
+  h1 { text-align: center; font-size: 20pt; color: #1a1a2e; border-bottom: 3px solid #1a1a2e; padding-bottom: 10px; margin-bottom: 4px; }
+  h1.sub { font-size: 11pt; color: #636e72; border: none; font-weight: normal; margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 15pt; color: #1a1a2e; border-left: 5px solid #e17055; padding-left: 10px; margin-top: 32px; }
+  h3 { font-size: 12pt; color: #2d3436; margin-top: 20px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px 0; font-size: 9pt; }
+  th { background: #1a1a2e; color: white; padding: 7px 8px; text-align: left; }
+  td { border: 1px solid #dfe6e9; padding: 6px 8px; vertical-align: top; }
+  tr:nth-child(even) { background: #f8f9fa; }
+  .box { background: #f0f3f5; border: 1px solid #dfe6e9; border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 10pt; }
+  .box-green { background: #f0fff4; border: 1px solid #55efc4; }
+  .box-yellow { background: #fffdf0; border: 1px solid #fdcb6e; }
+  .box-red { background: #fff5f5; border: 1px solid #fab1a0; }
+  .box-blue { background: #f0f4ff; border: 1px solid #74b9ff; }
+  .p0 { background: #d63031; color: white; padding: 1px 6px; border-radius: 3px; font-size: 8pt; font-weight: bold; }
+  .p1 { background: #e17055; color: white; padding: 1px 6px; border-radius: 3px; font-size: 8pt; font-weight: bold; }
+  .p2 { background: #fdcb6e; color: #2d3436; padding: 1px 6px; border-radius: 3px; font-size: 8pt; font-weight: bold; }
+  .done { color: #00b894; font-weight: bold; }
+  .tag-done { background: #d4edda; color: #155724; padding: 1px 6px; border-radius: 3px; font-size: 8pt; }
+  .tag-todo { background: #fff3cd; color: #856404; padding: 1px 6px; border-radius: 3px; font-size: 8pt; }
+  .tag-progress { background: #cce5ff; color: #004085; padding: 1px 6px; border-radius: 3px; font-size: 8pt; }
+  pre { background: #2d3436; color: #dfe6e9; padding: 14px 18px; border-radius: 6px; font-size: 9pt; overflow-x: auto; line-height: 1.6; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 9pt; }
+  hr { border: none; border-top: 1px solid #dfe6e9; margin: 24px 0; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .strong-red { color: #d63031; font-weight: bold; }
+  .strong-green { color: #00b894; font-weight: bold; }
+  .strong-blue { color: #0984e3; font-weight: bold; }
+  .section-header td { background: #dfe6e9 !important; font-weight: bold; font-size: 10pt; }
+</style>
+</head>
+<body>
+
+<h1>河北工业大学 MEM · 自学备考完整指南</h1>
+<h1 class="sub">管理类联考（管综 + 英语二）· 目标190分+ · 备考周期6.5个月 · 2026年6月-12月<br><span style="color:#d63031;">MEM 优先 · CISSP 放在统考之后（2027.1-2027.5）</span></h1>
+
+<!-- ====== 决策背景 ====== -->
+<h2>一、为什么 MEM 先于 CISSP？</h2>
+
+<div class="box box-blue">
+<strong>核心逻辑：MEM统考一年只有一次（12月），CISSP随报随考（每月都有）。先赶限时的，再赶不限时的。</strong>
+</div>
+
+<table>
+<tr><th width="15%">维度</th><th width="42%">MEM 先（新方案 ✅）</th><th width="43%">CISSP 先（旧方案 ❌）</th></tr>
+<tr>
+<td><strong>MEM备考周期</strong></td>
+<td class="strong-green">6.5个月，从容系统复习</td>
+<td class="strong-red">2个月，时间太紧</td>
+</tr>
+<tr>
+<td><strong>MEM过线把握</strong></td>
+<td class="strong-green">高。数学从零捡起来，真题2-3轮</td>
+<td class="strong-red">低。赌博式冲刺，数学可能挂</td>
+</tr>
+<tr>
+<td><strong>MEM不过的代价</strong></td>
+<td>—</td>
+<td class="strong-red">等一年 → 2027.12再考 → 2028.9入学</td>
+</tr>
+<tr>
+<td><strong>CISSP</strong></td>
+<td>统考后 2027.1-5 备考，4个月稳拿</td>
+<td>2026.6-10 备考，4个月稳拿</td>
+</tr>
+<tr>
+<td><strong>跳槽时间</strong></td>
+<td>2027.6-9（晚半年）</td>
+<td>2026底-2027初</td>
+</tr>
+<tr>
+<td><strong>跳槽时手上有什么</strong></td>
+<td class="strong-green">CISSP ✅ + MEM已过线 ✅ + 项目闭环 ✅</td>
+<td>CISSP ✅ + MEM结果未知 ❓ + 项目闭环 ✅</td>
+</tr>
+</table>
+
+<!-- ====== 背景前提 ====== -->
+<h2>二、备考背景</h2>
+
+<table>
+<tr><th width="22%">项目</th><td>内容</td></tr>
+<tr><td>考生</td><td>谢中义 · 37岁 · 项目管理本科（自考·中央财经）· 计算机大专（全日制·中石大）</td></tr>
+<tr><td>目标</td><td><strong>河北工业大学 MEM</strong>（工程管理硕士 · 非全 · 2.5年 · 双证 · 天津周末班 · 学费≈4-5万全程）</td></tr>
+<tr><td>考试</td><td>管理类联考 = 管综200分（数学75 + 逻辑60 + 写作65）+ 英语二100分 = 总分<strong>300分</strong></td></tr>
+<tr><td>国家线</td><td>约170分（2024年A区国家线172），河北工大过线即有望</td></tr>
+<tr><td>目标分数</td><td><strong>管综130+ + 英语二60+ = 190+</strong>（留20分安全垫）</td></tr>
+<tr><td>备考周期</td><td><strong>6.5个月</strong>（2026年6月 — 2026年12月统考）· 每天1-1.5h，周末半天</td></tr>
+<tr><td>备考方式</td><td><strong>自学</strong>（MBA大师免费课 + 真题 + 本篇模板/公式）—— 理由：逻辑和写作是售前天赋</td></tr>
+<tr><td>节奏</td><td>工作日北京上班，周五晚回天津，周六半天备考，周日全天陪家人</td></tr>
+</table>
+
+<!-- ====== 各科策略 ====== -->
+<h2>三、各科策略与精力分配</h2>
+
+<table>
+<tr><th width="12%">科目</th><th width="8%">满分</th><th width="8%">目标分</th><th>策略</th><th width="8%">精力</th><th>核心资源</th></tr>
+<tr>
+<td><strong>数学</strong></td><td>75</td><td>50-55</td>
+<td><strong>主攻科目。</strong>初高中数学底子在但15年未用 → 需要系统走一遍。<br>MBA大师免费课全章节 → 薄弱点逐个击破 → 真题分类刷2遍 → 错题回顾。<br>重点：应用题/排列组合/概率/数列/不定方程/几何。</td>
+<td style="text-align:center;color:#d63031;font-weight:bold;">40%</td>
+<td>MBA大师APP + 真题 + 本篇公式技巧</td>
+</tr>
+<tr>
+<td><strong>英语二</strong></td><td>100</td><td>60-65</td>
+<td><strong>长期积累。</strong>每天30-50个高频词（贯穿全程）→ 精读真题阅读 → 考前默写作文模板。<br>6.5个月足够把高频词过3遍以上。不用上培训班。</td>
+<td style="text-align:center;color:#e17055;font-weight:bold;">30%</td>
+<td>真题 + 本篇作文模板 + 考研高频词表（APP）</td>
+</tr>
+<tr>
+<td><strong>逻辑</strong></td><td>60</td><td>44-48</td>
+<td><strong>售前天赋区。</strong>形式逻辑：背4个公式，用真题反复练，必须满分。<br>论证逻辑：读题问自己"漏洞在哪"——你15年售前本能。<br>只刷真题，不听课，不买教材。</td>
+<td style="text-align:center;font-weight:bold;">15%</td>
+<td>真题 + 本篇逻辑公式表</td>
+</tr>
+<tr>
+<td><strong>写作</strong></td><td>65</td><td>45-50</td>
+<td><strong>降维打击区。</strong>15年售前写方案→文笔和逻辑远超普通考生。<br>只需熟悉格式：论证有效性分析（6种漏洞标签）+ 论说文（3段式）。<br>动手写4-6篇即可，不用报班、不用系统复习。</td>
+<td style="text-align:center;font-weight:bold;">15%</td>
+<td>本篇框架 + 3篇范文 + 漏洞类型清单</td>
+</tr>
+</table>
+
+<!-- ====== 28周计划 ====== -->
+<h2>四、6.5个月（28周）详细计划</h2>
+
+<h3>阶段总览</h3>
+
+<table>
+<tr><th width="12%">阶段</th><th width="14%">时间</th><th width="8%">周数</th><th>核心任务</th><th>里程碑</th></tr>
+<tr>
+<td><strong>1. 数学唤醒</strong></td><td>6月</td><td>4周</td>
+<td>数学：MBA大师APP从第一章开始听，每天1节<br>英语：开始背高频词，每天30个<br>逻辑、写作：不动</td>
+<td>数学走完一轮知识点<br>英语词汇量恢复感觉</td>
+</tr>
+<tr>
+<td><strong>2. 全科启动</strong></td><td>7月-8月中</td><td>6周</td>
+<td>数学：薄弱模块二轮强化 + 分题型练习<br>英语：每天50词 + 开始精读真题阅读<br>逻辑：形式逻辑入门（2周搞定）+ 真题分类<br>写作：看3篇范文，了解题型</td>
+<td>数学难点清零<br>逻辑建立手感</td>
+</tr>
+<tr>
+<td><strong>3. 真题一轮</strong></td><td>8月中-10月中</td><td>8周</td>
+<td>数学：真题按套刷（近10年20套）→ 错题分类整理<br>英语：真题按套刷 + 错题整理<br>逻辑：真题按套刷<br>写作：动手写4-6篇</td>
+<td>真题一轮完成<br>各科正确率稳定</td>
+</tr>
+<tr>
+<td><strong>4. 真题二轮</strong></td><td>10月中-11月底</td><td>6周</td>
+<td>数学：真题二刷 + 错题回顾 + 秒杀技巧<br>英语：真题二刷 + 作文模板默写<br>逻辑：真题二刷，保持手感<br>写作：背漏洞类型清单</td>
+<td>真题二轮完成<br>正确率75%+</td>
+</tr>
+<tr>
+<td><strong>5. 冲刺</strong></td><td>12月-考前</td><td>4周</td>
+<td>数学：错题回顾 + 秒杀技巧记忆 + 1-2次模考<br>英语：默写大小作文模板到肌肉记忆<br>逻辑：每天10题保持手感<br>写作：回顾写过文章的点评</td>
+<td>考前状态拉满<br>心态稳 + 模板熟</td>
+</tr>
+</table>
+
+<h3>各阶段每周细节</h3>
+
+<table>
+<tr><th>阶段</th><th>周次</th><th>周一-周四（北京·晚间1h）</th><th>周五</th><th>周六（天津·半天）</th><th>周日</th></tr>
+
+<tr><td rowspan="4">1. 数学唤醒<br>6月</td>
+<td>第1-2周</td>
+<td>数学：实数/比例/绝对值 → MBA大师每天1节<br>英语：高频词每天30个</td>
+<td>回天津</td>
+<td>数学：复习本周内容+做课后练习<br>英语：一周词汇复习</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第3周</td>
+<td>数学：方程/不等式/数列<br>英语：高频词每天30个</td>
+<td>回天津</td>
+<td>数学：做1套真题中的数学部分→诊断薄弱点<br>英语：一周词汇复习</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第4周</td>
+<td>数学：应用题（工程/行程/浓度）<br>英语：高频词每天40个</td>
+<td>回天津</td>
+<td>数学：薄弱点标记+整理"薄弱清单"<br>英语：一周词汇复习</td>
+<td>陪家人</td>
+</tr>
+
+<tr><td rowspan="6">2. 全科启动<br>7月-8月中</td>
+<td>第5-6周</td>
+<td>数学：排列组合/概率<br>英语：每天40词 + 1篇阅读精读<br>逻辑：形式逻辑专项（看完本篇公式表+真题20道）</td>
+<td>回天津</td>
+<td>数学：排列组合+概率练习<br>逻辑：形式逻辑真题2套</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第7-8周</td>
+<td>数学：几何（平面/立体/解析）<br>英语：每天40词 + 1篇阅读精读<br>逻辑：论证逻辑感受（只看不做，读题感受题型）</td>
+<td>回天津</td>
+<td>数学：几何练习<br>逻辑：真题1套（不限时，感受论证逻辑）</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第9-10周</td>
+<td>数学：数据描述/函数<br>英语：每天50词 + 1篇阅读+新题型<br>逻辑：开始按套做真题（限时）</td>
+<td>回天津</td>
+<td>数学：薄弱模块二轮强化<br>写作：看1篇论证有效性分析范文</td>
+<td>陪家人</td>
+</tr>
+
+<tr><td rowspan="8">3. 真题一轮<br>8月中-10月中</td>
+<td>第11-12周</td>
+<td>管综真题2015-2016（2套）：数学+逻辑<br>英语真题2015-2016（2套）</td>
+<td>回天津</td>
+<td>复盘：错题分类整理<br>写作：看1篇论说文范文</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第13-14周</td>
+<td>管综真题2017-2018<br>英语真题2017-2018</td>
+<td>回天津</td>
+<td>复盘+错题<br>写作：动手写1篇论证有效性分析</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第15-16周</td>
+<td>管综真题2019-2020<br>英语真题2019-2020</td>
+<td>回天津</td>
+<td>复盘+错题<br>写作：动手写1篇论说文</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第17-18周</td>
+<td><strong>10月网上报名！</strong><br>管综真题2021-2022<br>英语真题2021-2022</td>
+<td>回天津</td>
+<td>复盘+错题<br>写作：动手写第3-4篇</td>
+<td>陪家人</td>
+</tr>
+
+<tr><td rowspan="6">4. 真题二轮<br>10月中-11月底</td>
+<td>第19-20周</td>
+<td>管综真题2015-2019二刷（限时提速）<br>英语真题2015-2019二刷</td>
+<td>回天津</td>
+<td>数学：错题回顾+秒杀技巧<br>英语：开始背作文模板</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第21-22周</td>
+<td>管综真题2020-2024二刷<br>英语真题2020-2024二刷</td>
+<td>回天津</td>
+<td>数学：薄弱模块三刷<br>英语：大作文模板默写训练</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第23-24周</td>
+<td>数学：错题专攻 + 秒杀公式<br>逻辑：形式逻辑公式强化<br>英语：小作文模板默写</td>
+<td>回天津</td>
+<td>写作：再写1-2篇+对照范文修改<br>逻辑：论证逻辑真题回顾</td>
+<td>陪家人</td>
+</tr>
+
+<tr><td rowspan="4">5. 冲刺<br>12月-考前</td>
+<td>第25-26周</td>
+<td>数学：错题回顾（只看错题本）<br>逻辑：每天10题保持手感<br>英语：每天默写作文模板1遍</td>
+<td>回天津</td>
+<td>管综完整模考1次（计时3h）<br>英语完整模考1次（计时3h）</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第27周</td>
+<td>数学：秒杀技巧过一遍<br>逻辑：每天10题<br>英语：大小作文接力默写</td>
+<td>回天津</td>
+<td>管综模考第2次<br>英语模考第2次</td>
+<td>陪家人</td>
+</tr>
+<tr>
+<td>第28周<br>（考前周）</td>
+<td>数学：秒杀技巧速览<br>逻辑：不看新题，回顾错题<br>英语：作文模板最后一默</td>
+<td>回天津</td>
+<td>考前全真模拟（完整3h+3h）</td>
+<td>陪家人</td>
+</tr>
+</table>
+
+<div class="box box-red">
+<strong>铁律：</strong><br>
+① 周日全天陪老婆孩子，<strong>绝对不学习</strong><br>
+② 周六备考控制在半天（3-4小时），另半天休息/陪家人<br>
+③ 工作日每天 1-1.5h，不贪多<br>
+④ 10月统考网报设日历提醒——忘记报名 = 浪费一年
+</div>
+
+<!-- ====== 数学秒杀技巧 ====== -->
+<h2>五、数学秒杀技巧（5个必考高频考点）</h2>
+
+<h3>技巧1：工程/行程/浓度题 —— 设最小公倍数</h3>
+<div class="box">
+<strong>原理：</strong>把总量设为各效率数字的最小公倍数，避开分数计算。<br><br>
+<strong>例：</strong>一项工程，甲单独做15天完成，乙单独做20天完成。甲乙合作3天后，乙离开，甲单独完成剩下的。问还要几天？<br><br>
+<strong>秒杀法：</strong>设总量=60（15和20的最小公倍数）→ 甲效率4，乙效率3 → 合作3天完成(4+3)×3=21 → 剩余39 → 39/4=<strong>9.75天</strong> ✅<br><br>
+<strong>速度提升：</strong>3倍。省去所有分数通分计算。
+</div>
+
+<h3>技巧2：排列组合 —— 先选后排 + 相邻打包</h3>
+<div class="box">
+<strong>总口诀：先选后排，特殊优先，相邻打包，不相邻插空</strong><br><br>
+<strong>例1：</strong>6人中选3人站一排，甲必须在中间 → C(5,2)×2! = <strong>20种</strong><br>
+<strong>例2：</strong>5人站一排，甲乙必须相邻 → 打包×排列 = 4!×2! = <strong>48种</strong><br>
+<strong>例3：</strong>5人站一排，甲乙不能相邻 → 全排-相邻 = 120-48 = <strong>72种</strong>
+</div>
+
+<h3>技巧3：概率 —— "至少"题一律反向算</h3>
+<div class="box">
+<strong>口诀：遇"至少"→ 1减去反面</strong><br><br>
+<strong>例：</strong>投篮3次，命中率0.6，至少命中1次的概率？<br>
+秒杀：1 - 0.4³ = <strong>0.936</strong> ✅（省去P(1)+P(2)+P(3)的麻烦）
+</div>
+
+<h3>技巧4：数列 —— 优先看差值规律</h3>
+<div class="box">
+<strong>管综数列题 80% 差值法可秒杀</strong><br><br>
+<strong>例：</strong>2, 5, 10, 17, 26, ? → 差值=3,5,7,9 → 下个差11 → <strong>37</strong> ✅<br>
+<strong>口诀：</strong>做差→看规律→再差→等差/等比→反推<br>
+<strong>注意：</strong>一次差看不出规律就做二次差——管综最常见的数列就是二阶等差
+</div>
+
+<h3>技巧5：不定方程 —— 消元法</h3>
+<div class="box">
+<strong>管综每年必出1道，送分题</strong><br><br>
+<strong>例：</strong>铅笔1元+钢笔3元=20支共44元 → x+y=20, x+3y=44 → <strong>y=12, x=8</strong><br>
+<strong>核心：</strong>不是猜数，是直接消元解方程，10秒出答案
+</div>
+
+<!-- ====== 逻辑公式 ====== -->
+<h2>六、逻辑公式 + 解题框架</h2>
+
+<h3>6.1 形式逻辑公式表（占60%逻辑题 —— 必须满分的部分）</h3>
+
+<table>
+<tr><th width="18%">逻辑类型</th><th width="22%">公式</th><th width="32%">示例</th><th>注记</th></tr>
+<tr>
+<td><strong>如果A则B</strong></td>
+<td>A→B<br>等价于：¬B→¬A</td>
+<td>"如果下雨则地湿"<br>= "地不湿→没下雨"</td>
+<td><strong>逆否命题</strong>，管综最常考</td>
+</tr>
+<tr>
+<td><strong>只有A才B</strong></td>
+<td>B→A</td>
+<td>"只有考过才能毕业"<br>= "毕业→考过"</td>
+<td><strong>方向反过来！</strong>和"如果则"容易混</td>
+</tr>
+<tr>
+<td><strong>除非A否则B</strong></td>
+<td>¬A→B</td>
+<td>"除非下雨，否则出门"<br>= "不下雨→出门"</td>
+<td>= "如果不下雨就出门"</td>
+</tr>
+<tr>
+<td><strong>三段论</strong></td>
+<td>A→B, B→C → A→C</td>
+<td>"安全专家→懂密码，懂密码→懂数学"<br>→ "安全专家→懂数学"</td>
+<td>铁律：<strong>中项必须周延至少一次</strong></td>
+</tr>
+<tr>
+<td><strong>有的互换</strong></td>
+<td>有的A是B = 有的B是A</td>
+<td>"有的安全专家是博士"<br>= "有的博士是安全专家"</td>
+<td>"所有A是B"<strong>不能</strong>倒过来</td>
+</tr>
+</table>
+
+<h3>6.2 论证逻辑解题框架（你的售前优势区）</h3>
+
+<div class="box box-green">
+<strong>核心心法：读题时问自己——"这段话的漏洞在哪？"和你15年写方案、找别人方案漏洞的思维一模一样。</strong>
+</div>
+
+<table>
+<tr><th width="12%">题型</th><th width="18%">问法标志</th><th>解题方向</th></tr>
+<tr>
+<td><strong>削弱题</strong></td>
+<td>"最能削弱上述论证"</td>
+<td>找<strong>因果倒置</strong>（B导致A而非A导致B）<br>找<strong>他因解释</strong>（存在其他原因C导致B）<br>找<strong>反例</strong></td>
+</tr>
+<tr>
+<td><strong>加强题</strong></td>
+<td>"最能支持上述观点"</td>
+<td>找<strong>排除他因</strong>（排除了其他可能的解释）<br>找<strong>因果链条</strong>（补全A→B的中间环节）</td>
+</tr>
+<tr>
+<td><strong>假设题</strong></td>
+<td>"基于以下哪项假设"</td>
+<td>正确答案=论证成立<strong>必需的前提</strong><br>检验法：假设不成立→论证就垮→这就是答案</td>
+</tr>
+<tr>
+<td><strong>解释题</strong></td>
+<td>"最能解释上述现象"</td>
+<td>找<strong>矛盾双方的桥梁</strong><br>为什么"看起来矛盾但其实不矛盾"</td>
+</tr>
+</table>
+
+<!-- ====== 英语二作文模板 ====== -->
+<h2>七、英语二作文模板（大小作文通用）</h2>
+
+<h3>7.1 大作文：图表作文（15分 · 约150词 · 25分钟 · 目标10-12分）</h3>
+
+<pre>【第一段：描述图表 3-4句】
+
+The [bar chart / pie chart / line graph / table] illustrates the
+[changes / distribution] of [主题词] in [时间段/地点].
+
+As is shown in the chart, [最突出的数据] accounted for [比例/
+数值], followed by [第二的数据] which constituted [比例/数值].
+Meanwhile, [其他值得注意的数据或趋势].
+
+
+【第二段：分析原因 3-4句】
+
+Several factors contribute to this phenomenon. First and foremost,
+the rapid development of [technology] has laid a solid foundation.
+Secondly, the government's supportive policies on [相关领域] have
+played a crucial role in promoting this trend. In addition, people's
+increasing awareness of [convenience / efficiency / health] has
+also driven the continuous growth.
+
+万能原因词汇（选2-3个套用）：
+rapid development of technology / government's supportive policies /
+people's increasing awareness of... / improvement of living standards /
+growing demand for... / advancement of related technology
+
+
+【第三段：总结+展望 2-3句】
+
+In conclusion, this trend is likely to continue in the foreseeable
+future. [主体] is expected to [further increase / maintain steady
+growth], reflecting the positive development of China's [economy].</pre>
+
+<h3>7.2 小作文：书信/通知（10分 · 约100词 · 15分钟 · 目标7-8分）</h3>
+
+<pre>Dear [Name / Sir or Madam],
+
+    I am writing this letter to [invite you to / apply for / suggest
+that / complain about / thank you for] [具体事项].
+
+    [核心内容 2-3句：时间/地点/原因/建议]
+
+    I would greatly appreciate it if you could [期望动作]. Should
+you have any questions, please do not hesitate to contact me.
+
+                                                       Yours sincerely,
+                                                       [Your Name]
+
+不同目的的动词替换：
+邀请 invite / 申请 apply for / 建议 suggest / 投诉 complain / 感谢 thank
+→ 格式对 + 没语法错误 = 7-8分（满分10分）</pre>
+
+<!-- ====== 写作 ====== -->
+<h2>八、写作：你的降维打击区（65分，目标45-50分）</h2>
+
+<h3>8.1 论证有效性分析（30分）</h3>
+
+<p><strong>6种必背漏洞类型标签：</strong></p>
+
+<table>
+<tr><th>漏洞类型</th><th>含义</th><th>模板句式</th></tr>
+<tr><td>1. 因果倒置</td><td>A和B有关联，不一定A导致B</td><td>"...混淆了因果关系，可能是B导致A"</td></tr>
+<tr><td>2. 以偏概全</td><td>个别案例推出普遍结论</td><td>"...以个别案例推断整体，样本不具有代表性"</td></tr>
+<tr><td>3. 偷换概念</td><td>前后同一词，含义不同</td><td>"...前后'XX'概念并不一致，存在偷换概念"</td></tr>
+<tr><td>4. 忽略他因</td><td>忽略其他可能的原因</td><td>"...忽略了C/D等其他可能导致结果的因素"</td></tr>
+<tr><td>5. 不当类比</td><td>两个不可比的事物强行类比</td><td>"...A和B存在本质差异，不可简单类比"</td></tr>
+<tr><td>6. 时间外推</td><td>过去趋势不一定延续到未来</td><td>"...过去的变化趋势不能简单外推到未来"</td></tr>
+</table>
+
+<div class="box box-green">
+<strong>你的优势：</strong>找别人方案漏洞 = 你15年售前日常。这科不需要特别准备。<br>
+<strong>只需做：</strong>动手写4-6篇 → 对照范文 → 修改。够了。
+</div>
+
+<h3>8.2 论说文（35分）</h3>
+
+<div class="box box-green">
+<strong>你的优势：</strong>论说文 = 你售前方案的超级简化版 → 亮观点→分论点→例证。你写的方案结构远超管综要求。<br>
+这科是真正的降维打击，请放心自信应对。
+</div>
+
+<pre>标准结构（5-6段，约700字，35分钟）：
+
+第1段：引材料 + 亮中心论点
+第2-4段：分论点1 + 例证 / 分论点2 + 例证 / 分论点3 + 例证
+第5段：总结 + 升华
+
+→ 结构清晰 + 逻辑通顺 + 有实例 = 25-28分（满分35分）
+→ 不需要华丽辞藻，不需要名人名言</pre>
+
+<!-- ====== 免费资源 ====== -->
+<h2>九、免费备考资源清单</h2>
+
+<table>
+<tr><th width="5%">#</th><th width="28%">资源</th><th width="30%">获取方式</th><th width="8%">状态</th><th>用途</th></tr>
+<tr><td>1</td><td><strong>MBA大师APP · 数学免费课</strong></td><td>应用商店下载 → 数学全章节免费课程</td><td>✅ 已安装</td><td>数学主教材，从第1章开始学</td></tr>
+<tr><td>2</td><td><strong>管理类联考历年真题</strong></td><td>百度网盘搜"管理类联考真题PDF"</td><td>✅ 已有</td><td>最重要练习材料，打印纸质版</td></tr>
+<tr><td>3</td><td><strong>数学公式汇总PDF</strong></td><td>B站/知乎/小红书搜"管综数学公式"</td><td>需获取</td><td>冲刺记忆 + 日常查阅</td></tr>
+<tr><td>4</td><td><strong>逻辑公式表</strong></td><td>本篇第六章直接使用</td><td>✅ 已有</td><td>打印或截图</td></tr>
+<tr><td>5</td><td><strong>英语大小作文模板</strong></td><td>本篇第七章直接使用</td><td>✅ 已有</td><td>考前2周反复默写</td></tr>
+<tr><td>6</td><td><strong>论证有效性分析·漏洞清单</strong></td><td>本篇第八章直接使用</td><td>✅ 已有</td><td>考前背熟6种漏洞标签</td></tr>
+<tr><td>7</td><td><strong>免费模考</strong></td><td>MBA大师APP → 免费模考模块</td><td>需使用</td><td>11月和12月各做1-2次</td></tr>
+<tr><td>8</td><td><strong>B站真题讲解</strong></td><td>搜"管综数学真题"→ 陈剑/张伟男/老吕</td><td>需使用</td><td>遇到看不懂的题→看视频</td></tr>
+<tr><td>9</td><td><strong>英语二高频词表</strong></td><td>任一考研APP（墨墨/扇贝）或百度搜PDF</td><td>需获取</td><td>1500-2000词；每天30-50个</td></tr>
+<tr><td>10</td><td><strong>备考微信群/QQ群</strong></td><td>搜"2027管理类联考"/"河北工大MEM"</td><td>需加入</td><td>资料自然流到你面前</td></tr>
+</table>
+
+<div class="box box-red">
+<strong>不需要花钱买的：</strong><br>
+❌ 付费课程 — MBA大师免费课+B站全包<br>
+❌ 模拟题 — 真题近10年=20套管综+20套英语，够你做2-3轮<br>
+❌ 报班 — 你有售前天赋+6.5个月从容时间
+</div>
+
+<!-- ====== 关键时间节点 ====== -->
+<h2>十、关键时间节点（设日历提醒）</h2>
+
+<table>
+<tr><th>时间</th><th>事件</th><th>行动</th></tr>
+<tr><td><strong>2026.6.2 今天</strong></td><td>MEM备考启动</td><td>打开MBA大师APP → 数学第一章 → 开始</td></tr>
+<tr><td>2026.6月底</td><td>数学第一轮走完</td><td>完成薄弱点标记</td></tr>
+<tr><td>2026.8月中</td><td>全科启动完成</td><td>进入真题一轮</td></tr>
+<tr><td><strong>2026.10月</strong></td><td><span class="strong-red">统考网上报名！</span></td><td>研招网报名，不要错过</td></tr>
+<tr><td>2026.10月中</td><td>真题一轮完成</td><td>进入真题二轮</td></tr>
+<tr><td>2026.11月</td><td>现场/网上确认</td><td>按考点要求确认</td></tr>
+<tr><td>2026.11月底</td><td>真题二轮完成</td><td>进入冲刺</td></tr>
+<tr><td><strong>2026.12月底</strong></td><td><span class="strong-red">全国统考</span></td><td>管综+英语二</td></tr>
+<tr><td>2027.1-2月</td><td>出分</td><td>查分</td></tr>
+<tr><td>2027.3月</td><td>复试（如有）</td><td>河北工大复试</td></tr>
+<tr><td>2027.4-5月</td><td>CISSP备考</td><td>MEM已过线，开始CISSP</td></tr>
+<tr><td>2027.6-9月</td><td>跳槽执行</td><td>CISSP+MEM双在手</td></tr>
+<tr><td>2027.9月</td><td>河北工大MEM入学</td><td>天津周末班</td></tr>
+</table>
+
+<hr>
+<p style="text-align: center; color: #636e72; font-size: 10pt;">
+整理日期：2026年6月2日 · 统考倒计时：约200天 · 备考周期：6.5个月<br>
+<strong style="color:#d63031;">第一步：打开MBA大师APP → 数学第一章"实数/比例/绝对值" → 开始听课</strong>
+</p>
+
+</body>
+</html>

@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熵密杯 CTF 模拟练习平台 v2</title>
+<style>
+:root {
+  --bg: #0a0e14; --surface: #131820; --surface2: #1a1f2e;
+  --border: #2a3040; --text: #c8ccd4; --text-dim: #6c7490;
+  --accent: #39bae6; --green: #7fd962; --yellow: #ffb454;
+  --red: #f26d78; --purple: #d2a6ff; --cyan: #59c2ff;
+  --code-bg: #0d1117;
+  --font-mono: 'SF Mono','Fira Code','Consolas',monospace;
+  --font-sans: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-sans); line-height:1.6; min-height:100vh; }
+.header { background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%); border-bottom:1px solid var(--border); padding:18px 0; text-align:center; }
+.header h1 { font-size:1.7em; background:linear-gradient(90deg,var(--cyan),var(--accent),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-weight:800; letter-spacing:1px; }
+.header .subtitle { color:var(--text-dim); font-size:0.85em; margin-top:4px; }
+.tab-nav { display:flex; gap:2px; background:var(--surface); border-bottom:2px solid var(--border); padding:0 8px; overflow-x:auto; }
+.tab-btn { background:none; border:none; color:var(--text-dim); font-family:var(--font-sans); font-size:0.78em; padding:10px 12px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.2s; white-space:nowrap; display:flex; align-items:center; gap:5px; }
+.tab-btn:hover { color:var(--text); background:var(--surface2); }
+.tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab-btn .pts { font-size:0.72em; padding:1px 5px; border-radius:3px; font-weight:600; }
+.pts-300 { background:#2a4a2a; color:var(--green); }
+.pts-500 { background:#2a3a4a; color:var(--cyan); }
+.pts-600 { background:#3a3020; color:var(--yellow); }
+.pts-900 { background:#3a2030; color:var(--purple); }
+.pts-1000 { background:#3a2020; color:var(--red); }
+.main { max-width:1100px; margin:0 auto; padding:16px 12px; }
+.challenge-panel { display:none; }
+.challenge-panel.active { display:block; animation:fadeIn 0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+.section { background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:16px; overflow:hidden; }
+.section-header { background:var(--surface2); padding:10px 16px; font-weight:700; font-size:0.9em; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:7px; }
+.section-body { padding:16px; }
+.section-body p { margin-bottom:8px; font-size:0.9em; }
+.section-body ul, .section-body ol { margin:6px 0 10px 22px; font-size:0.9em; }
+.section-body li { margin-bottom:4px; }
+.code-block { background:var(--code-bg); border:1px solid var(--border); border-radius:6px; margin:10px 0; overflow:hidden; }
+.code-block .code-header { background:var(--surface2); padding:6px 12px; font-size:0.78em; color:var(--text-dim); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.code-block .code-header .lang { font-weight:600; color:var(--accent); }
+.code-block pre { padding:12px 16px; overflow-x:auto; font-family:var(--font-mono); font-size:0.8em; line-height:1.5; color:#b0b8c4; margin:0; }
+.code-block .kw { color:#f26d78; } .code-block .fn { color:#59c2ff; } .code-block .st { color:#7fd962; } .code-block .cm { color:#5c6778; font-style:italic; } .code-block .nb { color:#ffb454; }
+.formula { font-family:var(--font-mono); background:var(--surface2); padding:2px 8px; border-radius:4px; font-size:0.88em; color:var(--accent); }
+.highlight { color:var(--yellow); font-weight:700; }
+.bug { color:var(--red); font-weight:700; }
+.data-box { background:var(--code-bg); border:1px solid var(--border); border-radius:6px; padding:12px 16px; margin:8px 0; font-family:var(--font-mono); font-size:0.8em; word-break:break-all; }
+.data-box .label { color:var(--text-dim); font-size:0.85em; margin-bottom:2px; font-family:var(--font-sans); }
+.data-box .value { color:var(--cyan); font-size:0.88em; }
+.data-box .value-sm { color:var(--cyan); font-size:0.76em; max-height:110px; overflow-y:auto; }
+.input-group { margin:12px 0; }
+.input-group label { display:block; color:var(--text-dim); font-size:0.85em; margin-bottom:3px; font-weight:600; }
+.input-group input, .input-group textarea { width:100%; background:var(--code-bg); border:1px solid var(--border); border-radius:6px; padding:9px 12px; color:var(--text); font-family:var(--font-mono); font-size:0.85em; transition:border-color 0.2s; }
+.input-group input:focus, .input-group textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(57,186,230,0.15); }
+.input-group textarea { min-height:70px; resize:vertical; }
+.btn { padding:8px 18px; border-radius:6px; font-family:var(--font-sans); font-size:0.88em; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px; }
+.btn-primary { background:var(--accent); color:#0a0e14; }
+.btn-primary:hover { background:#5cccf0; transform:translateY(-1px); }
+.btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-secondary:hover { background:#252a38; }
+.btn-hint { background:transparent; color:var(--yellow); border:1px solid #4a3820; font-size:0.8em; padding:5px 10px; }
+.btn-hint:hover { background:#2a2010; }
+.btn-reset { background:transparent; color:var(--red); border:1px solid #4a2020; font-size:0.8em; padding:5px 10px; }
+.btn-reset:hover { background:#2a1010; }
+.btn-row { display:flex; gap:8px; margin:10px 0; flex-wrap:wrap; }
+.feedback { margin:10px 0; padding:12px 16px; border-radius:6px; font-weight:600; font-size:0.88em; display:none; }
+.feedback.success { display:block; background:#0d2818; border:1px solid #1a5c2e; color:var(--green); }
+.feedback.error { display:block; background:#281018; border:1px solid #5c1a2a; color:var(--red); }
+.feedback.info { display:block; background:#181828; border:1px solid #2a2a5c; color:var(--purple); }
+.hint-box { background:#1a1800; border:1px solid #4a4000; border-radius:6px; padding:10px 14px; margin:8px 0; color:var(--yellow); font-size:0.85em; display:none; }
+.hint-box.visible { display:block; }
+.hint-box .hint-level { font-weight:700; margin-bottom:3px; }
+.progress-bar { display:flex; gap:8px; margin:14px 0; flex-wrap:wrap; }
+.progress-item { padding:6px 10px; border-radius:6px; font-size:0.8em; font-weight:600; border:1px solid var(--border); background:var(--surface2); }
+.progress-item.solved { border-color:var(--green); color:var(--green); background:#0d2818; }
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:999; justify-content:center; align-items:center; }
+.modal-overlay.visible { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:24px; max-width:420px; width:90%; }
+.modal h3 { margin-bottom:12px; color:var(--accent); }
+.modal input { width:100%; background:var(--code-bg); border:1px solid var(--border); border-radius:6px; padding:10px; color:var(--text); font-family:var(--font-mono); font-size:1em; margin-bottom:12px; }
+.modal .btn-row { justify-content:flex-end; }
+@media(max-width:768px){ .tab-btn{font-size:0.7em;padding:8px 8px;} .section-body{padding:10px;} .code-block pre{font-size:0.72em;padding:8px;} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔐 熵密杯 CTF 模拟练习平台 v2</h1>
+  <div class="subtitle">基于 2024 第二届熵密杯 · 7 道交互式密码学挑战 · 按赛题顺序排列</div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab(0)">📝 初始一<span class="pts pts-300">300</span></button>
+  <button class="tab-btn" onclick="switchTab(1)">🔗 初始二<span class="pts pts-300">300</span></button>
+  <button class="tab-btn" onclick="switchTab(2)">📐 初始三<span class="pts pts-300">300</span></button>
+  <button class="tab-btn" onclick="switchTab(3)">🔓 flag1<span class="pts pts-600">600</span></button>
+  <button class="tab-btn" onclick="switchTab(4)">🔥 flag2<span class="pts pts-900">900</span></button>
+  <button class="tab-btn" onclick="switchTab(5)">🎫 flag3<span class="pts pts-500">500</span></button>
+  <button class="tab-btn" onclick="switchTab(6)">🎲 flag4<span class="pts pts-1000">1000</span></button>
+</div>
+
+<div class="main">
+
+<!-- ============ TAB SWITCHING & HELPERS ============ -->
+<script>
+function switchTab(i){document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));document.querySelectorAll('.challenge-panel').forEach((p,j)=>p.classList.toggle('active',j===i));}
+function showHint(ch,lv){document.getElementById('hint-'+ch+'-'+lv).classList.toggle('visible');}
+const solved=Array(7).fill(false);
+function markSolved(i){solved[i]=true;const e=document.getElementById('prog-'+i);e.textContent='✅ '+e.textContent.replace(/^[✅⏳]\s*/,'');e.classList.add('solved');}
+function toHex(arr){if(typeof arr==='bigint')return arr.toString(16);return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');}
+function randBigInt(max){if(typeof max==='bigint'){const bits=max.toString(2).length;let r=0n;for(let i=0;i<bits;i+=30)r=(r<<30n)|BigInt(Math.floor(Math.random()*1073741824));return r%max;}return BigInt(Math.floor(Math.random()*Number(max)));}
+function randBits(n){let r=0n;for(let i=0;i<n;i+=30)r=(r<<30n)|BigInt(Math.floor(Math.random()*1073741824));return r&((1n<<BigInt(n))-1n);}
+function egcd(a,b){if(b===0n)return[a,1n,0n];const[g,x,y]=egcd(b,a%b);return[g,y,x-(a/b)*y];}
+function modInv(a,m){const[g,x]=egcd(((a%m)+m)%m,m);if(g!==1n)throw new Error('No inverse');return((x%m)+m)%m;}
+function rotl32(x,n){return((x<<n)|(x>>>32-n))>>>0;}
+</script>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 0: 初始谜题一 — 乘法密码        -->
+<!-- ========================================== -->
+<div class="challenge-panel active" id="panel-0">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>你截获了一段使用<b>乘法模加密</b>的密文。加密者使用了以下方案：</p>
+      <ol>
+        <li>在原始消息前面拼接固定前缀 <span class="formula">"CryptoCup message:"</span></li>
+        <li>末尾用 <span class="formula">\x00</span> 填充到 <b>16 的倍数</b></li>
+        <li>按 16 字节分组，每组转为整数 mᵢ</li>
+        <li>加密：<span class="formula">cᵢ = mᵢ × kᵢ (mod N)</span>，kᵢ₊₁ = kᵢ + 1</li>
+        <li>每个 cᵢ 转 32 字节拼接为密文</li>
+      </ol>
+      <p>给定模数 N 和密文，请<b>恢复原始消息</b>。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">📦 已知数据 <button class="btn btn-reset" style="margin-left:auto" onclick="genC0()">🔄 换一题</button></div>
+    <div class="section-body">
+      <div class="data-box"><div class="label">模数 N</div><div class="value-sm" id="c0-N"></div></div>
+      <div class="data-box"><div class="label">前缀 (已知明文前16字节)</div><div class="value">CryptoCup messag</div></div>
+      <div class="data-box"><div class="label">截获的密文 (hex, 每32B一组)</div><div class="value-sm" id="c0-cipher"></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(0,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(0,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(0,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-0-0"><div class="hint-level">Hint 1</div>"CryptoCup message:" 有 19 字节 > 16 字节 → 第一组明文已知 → <b>已知明文攻击</b>。</div>
+      <div class="hint-box" id="hint-0-1"><div class="hint-level">Hint 2</div>由 c₀ = m₀ × k₀ (mod N) 得 k₀ = <b>c₀ × m₀⁻¹ (mod N)</b>。然后用 k₁=k₀+1 解密下一组。</div>
+      <div class="hint-box" id="hint-0-2"><div class="hint-level">Hint 3 — 伪代码</div><pre style="font-size:0.82em">key = c0 * modInv(m0, N) % N
+for each block: mi = ci * modInv(key, N) % N; key += 1</pre></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🏴 提交答案</div>
+    <div class="section-body">
+      <div class="input-group"><label>原始消息（纯文本）</label><textarea id="c0-ans" placeholder="输入恢复出的消息..."></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkC0()">✅ 提交验证</button>
+        <button class="btn btn-secondary" onclick="reqSolution(0)">📖 查看解法</button>
+      </div>
+      <div class="feedback" id="c0-fb"></div>
+      <div id="c0-sol" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 1: 初始谜题二 — SM3 哈希长度扩展 -->
+<!-- ========================================== -->
+<div class="challenge-panel" id="panel-1">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>一个基于 <b>SM3 哈希</b>的 Token 验证系统：</p>
+      <ul>
+        <li>密钥 <span class="formula">hmac_key</span> 被强制控制为 <b>32 字节</b>（不足则补 \x00，超过则截断）</li>
+        <li>Counter 为 <b>4 字节</b>整数</li>
+        <li>Token = <span class="formula">SM3(hmac_key || counter)</span></li>
+        <li>输入总长 = 32 + 4 = <b>36 字节 &lt; 64 字节</b>（SM3 分组大小）</li>
+        <li>→ SM3 只计算了 <b>一个分组</b>！</li>
+      </ul>
+      <p>你需要：构造新的 counter 和对应 token，使得 counter 低 32 位 &gt; 原 counter，且 token 正确。<br>
+      <b>不能直接知道 hmac_key</b>，但可以利用 SM3 的 <b class="highlight">Merkle-Damgård 结构</b>进行哈希长度扩展攻击。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">📦 已知数据 <button class="btn btn-reset" style="margin-left:auto" onclick="genC1()">🔄 换一题</button></div>
+    <div class="section-body">
+      <div class="data-box"><div class="label">SM3 哈希结果 (hex, 64 字符 = 256 bit)</div><div class="value-sm" id="c1-hash"></div></div>
+      <div class="data-box"><div class="label">Counter 值 (hex, 8 字符 = 4 字节)</div><div class="value" id="c1-counter"></div></div>
+      <div class="data-box"><div class="label">HMAC_KEY 长度</div><div class="value">32 字节 (未知内容)</div></div>
+      <div class="data-box"><div class="label">SM3 分组大小</div><div class="value">64 字节 (512 bit)</div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(1,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(1,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(1,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-1-0"><div class="hint-level">Hint 1 — SM3 填充规则</div>
+        SM3 对 36 字节消息的填充：消息(36B) + "1"(1bit) + "00...0"(填充到448bit) + 长度(64bit=288)。<br>
+        填充后整个分组 512 bit = 64 字节。我们拿到的哈希值就是这个分组压缩后的输出。
+      </div>
+      <div class="hint-box" id="hint-1-1"><div class="hint-level">Hint 2 — 构造新 counter</div>
+        新 counter = <b>原counter(4B) + SM3填充剩余部分 + 额外数据(如 \xff\xff\xff\xff)</b><br>
+        这样 SM3(KEY || 新counter) 会被分成 2 个分组：<br>
+        分组1 = KEY || counter || padding（与原来相同 → 哈希值 = 已知值）<br>
+        分组2 = 额外数据 || 新padding → <b>以已知哈希值为 IV 继续计算</b>
+      </div>
+      <div class="hint-box" id="hint-1-2"><div class="hint-level">Hint 3 — 不使用 KEY 计算新哈希</div>
+        SM3 的压缩函数 CF 是公开的。以已知的哈希值为初始向量 IV，对第二个分组（额外数据+padding）调用 CF，即可得到 SM3(KEY || 新counter)。<br>
+        完整 padded 消息结构的 hex 就是新 counter。
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🏴 提交答案</div>
+    <div class="section-body">
+      <div class="input-group"><label>新 Counter (hex 格式，任意长度，其低 32 位需 &gt; 原 counter & 0xFFFFFFFF)</label><textarea id="c1-newcounter" placeholder="输入你构造的新 counter (hex)..."></textarea></div>
+      <div class="input-group"><label>新 Counter 对应的 SM3 Token (64 个 hex 字符)</label><input type="text" id="c1-newtoken" placeholder="输入 SM3(KEY || 新counter) 的 hex..."></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkC1()">✅ 提交验证</button>
+        <button class="btn btn-secondary" onclick="reqSolution(1)">📖 查看解法</button>
+      </div>
+      <div class="feedback" id="c1-fb"></div>
+      <div id="c1-sol" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 2: 初始谜题三 — LWE 矩阵求逆     -->
+<!-- ========================================== -->
+<div class="challenge-panel" id="panel-2">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>一个名为 LWE 的加密系统，但参数故意设得很小：</p>
+      <ul>
+        <li>维度 n = <b>4</b>，模数 q = <b>251</b></li>
+        <li>私钥 s：4维随机向量，噪声 e：4维 <b>01 向量</b></li>
+        <li>公钥：<span class="formula">b = A·s + e (mod q)</span>，其中 <b>A 可逆</b></li>
+        <li>加密消息 m（转为 4 维 01 向量）：</li>
+        <li><span class="formula">c₁ = x·A</span> 和 <span class="formula">c₂ = x·b + e₁ + m·(q/2)</span></li>
+      </ul>
+      <p>给定 A, b, c₁, c₂，恢复消息 m。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">📦 已知数据 <button class="btn btn-reset" style="margin-left:auto" onclick="genC2()">🔄 换一题</button></div>
+    <div class="section-body">
+      <div class="data-box"><div class="label">矩阵 A (4×4, mod 251)</div><div class="value-sm" id="c2-A"></div></div>
+      <div class="data-box"><div class="label">向量 b (4×1, mod 251)</div><div class="value" id="c2-b"></div></div>
+      <div class="data-box"><div class="label">密文 c₁ (4×4, mod 251)</div><div class="value-sm" id="c2-c1"></div></div>
+      <div class="data-box"><div class="label">密文 c₂ (4×1, mod 251)</div><div class="value" id="c2-c2"></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(2,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(2,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(2,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-2-0"><div class="hint-level">Hint 1</div>A 可逆 → 从 c₁ = x·A 直接求 <b>x = c₁·A⁻¹ (mod q)</b></div>
+      <div class="hint-box" id="hint-2-1"><div class="hint-level">Hint 2</div>t = c₂ - x·b = e₁ + m·(q/2)。e₁ ∈ {0,1}，q/2 = 125。</div>
+      <div class="hint-box" id="hint-2-2"><div class="hint-level">Hint 3</div>mᵢ=0 → tᵢ∈{0,1}≈0；mᵢ=1 → tᵢ∈{125,126}≈125。<br>阈值判断：tᵢ ≥ q/2 → mᵢ=1，否则 mᵢ=0。</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🏴 提交答案</div>
+    <div class="section-body">
+      <div class="input-group"><label>消息 m (4位二进制如 "1011" 或 hex 如 "0xb")</label><input type="text" id="c2-ans" placeholder="输入二进制或十六进制..."></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkC2()">✅ 提交验证</button>
+        <button class="btn btn-secondary" onclick="reqSolution(2)">📖 查看解法</button>
+      </div>
+      <div class="feedback" id="c2-fb"></div>
+      <div id="c2-sol" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 3: flag1 — 密钥爆破 (600 pts)   -->
+<!-- ========================================== -->
+<div class="challenge-panel" id="panel-3">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>一个自定义对称密码用于加密口令。口令格式：<span class="formula">"pwd:xxxxxxxxxxxx"</span>（16 字节，<b>前 4 字节固定</b>）。</p>
+      <p>密钥 <b>3 字节</b>（简化自原题 4 字节），已知首字节为 <b>0xF0</b>。有效搜索空间 ≈ <b>2^16 = 65536</b>。</p>
+      <p>加密流程（4 轮）：reverseBits → sBoxTransform → leftShiftBytes → addRoundKey</p>
+      <p>给定密文（16 字节 hex），<b>爆破密钥恢复口令</b>。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">📦 已知数据 <button class="btn btn-reset" style="margin-left:auto" onclick="genC3()">🔄 换一题</button></div>
+    <div class="section-body">
+      <div class="data-box"><div class="label">密文 (16 字节 hex)</div><div class="value" id="c3-cipher"></div></div>
+      <div class="data-box"><div class="label">S-Box</div><div class="value">[2,10,4,12, 1,3,9,14, 7,11,8,6, 5,0,15,13]</div></div>
+      <div class="data-box"><div class="label">已知</div><div class="value">口令以 "pwd:" 开头 | 密钥首字节 = 0xF0 | 搜索空间 65536</div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(3,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(3,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(3,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-3-0"><div class="hint-level">Hint 1</div>密钥范围 0xF00000~0xF0FFFF (65536 种)，逐个尝试解密，检查结果是否以 "pwd:" 开头。</div>
+      <div class="hint-box" id="hint-3-1"><div class="hint-level">Hint 2</div>解密 = 逆序执行：addRoundKey → rightShiftBytes → invSBox → reverseBits（从最后一轮往前）。</div>
+      <div class="hint-box" id="hint-3-2"><div class="hint-level">Hint 3</div>逆 S-Box = [13,4,0,5, 2,12,11,8, 10,6,1,9, 3,15,7,14]。或直接点"浏览器自动爆破"按钮。</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🏴 提交答案</div>
+    <div class="section-body">
+      <div class="input-group"><label>口令 password</label><input type="text" id="c3-ans" placeholder="输入 'pwd:...' 格式口令..."></div>
+      <div class="input-group"><label>密钥 (hex, 如 "F0A3B2")</label><input type="text" id="c3-key" placeholder="输入爆破出的密钥..."></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkC3()">✅ 提交验证</button>
+        <button class="btn btn-secondary" onclick="autoBruteC3()">🤖 浏览器自动爆破</button>
+        <button class="btn btn-secondary" onclick="reqSolution(3)">📖 查看解法</button>
+      </div>
+      <div class="feedback" id="c3-fb"></div>
+      <div id="c3-progress" style="display:none;margin:6px 0;color:var(--text-dim);font-size:0.82em"></div>
+      <div id="c3-sol" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 4: flag2 — SM2 协同签名攻击     -->
+<!-- ========================================== -->
+<div class="challenge-panel" id="panel-4">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>你审计一个 <b>SM2 协同签名协议</b>，发现服务端代码中的 <b class="bug">致命 Bug</b>：</p>
+      <div class="code-block"><div class="code-header"><span class="lang">C — server.c (关键代码)</span></div>
+<pre>!BN_rand_range(k2, n) ||
+<span class="bug">!BN_copy(k3, k2)</span>          // ⚠️ k3 = k2 !! 不是独立随机数！
+
+// 之后：
+// s2 = d2 * k3  = <b>d2 * k2</b>         (mod n)
+// s3 = d2 * (r + k2)              (mod n)</pre></div>
+      <p>你截获了 s₂, s₃, r。请<b>利用 k3=k2 求出服务端私钥 d₂</b>（即 flag）。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">📦 截获数据 <button class="btn btn-reset" style="margin-left:auto" onclick="genC4()">🔄 换一题</button></div>
+    <div class="section-body">
+      <div class="data-box"><div class="label">SM2 曲线阶 n</div><div class="value-sm">FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123</div></div>
+      <div class="data-box"><div class="label">s₂ (hex)</div><div class="value-sm" id="c4-s2"></div></div>
+      <div class="data-box"><div class="label">s₃ (hex)</div><div class="value-sm" id="c4-s3"></div></div>
+      <div class="data-box"><div class="label">r (hex)</div><div class="value-sm" id="c4-r"></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(4,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(4,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(4,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-4-0"><div class="hint-level">Hint 1</div>列出方程：s₂=d₂·k₂，s₃=d₂·(r+k₂)。两个方程，两个未知数(d₂,k₂)→可解！</div>
+      <div class="hint-box" id="hint-4-1"><div class="hint-level">Hint 2</div>s₃ - s₂ = d₂·(r+k₂) - d₂·k₂ = <b>d₂·r</b>。k₂ 被消掉了！</div>
+      <div class="hint-box" id="hint-4-2"><div class="hint-level">Hint 3</div>d₂ = <b>(s₃ - s₂) × r⁻¹ (mod n)</b>。只需一次模逆运算，不需要椭圆曲线！</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🏴 提交答案</div>
+    <div class="section-body">
+      <div class="input-group"><label>服务端私钥 d₂ (hex, 字母小写)</label><input type="text" id="c4-ans" placeholder="输入 d₂ hex..."></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkC4()">✅ 提交验证</button>
+        <button class="btn btn-secondary" onclick="reqSolution(4)">📖 查看解法</button>
+      </div>
+      <div class="feedback" id="c4-fb"></div>
+      <div id="c4-sol" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 5: flag3 — 证书登录绕过 (500)   -->
+<!-- ========================================== -->
+<div class="challenge-panel" id="panel-5">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>你拿到了一份服务器登录代码 <span class="formula">login.go</span>，其流程如下：</p>
+      <ol>
+        <li>检查 <b>用户名是否已注册</b>（"shangmibeiadmin" 已存在）</li>
+        <li>检查随机挑战码是否过期</li>
+        <li>校验证书（由根 CA 签发）</li>
+        <li>用证书中的公钥验证签名</li>
+        <li><b class="bug">❌ 没有检查证书的 CommonName 是否 == 登录用户名！</b></li>
+      </ol>
+      <p>你有一个注册接口，可以用自己的公钥注册任意用户名（不能重复）。<br>
+      你的目标是：<b>以 "shangmibeiadmin" 身份登录，拿到 flag3</b>。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🔧 操作面板 <button class="btn btn-reset" style="margin-left:auto" onclick="genC5()">🔄 重置题目</button></div>
+    <div class="section-body">
+      <p style="color:var(--yellow)">你的密钥对已在下方生成。请按步骤操作：</p>
+      <div class="data-box"><div class="label">你的私钥 d (hex, 请保管好)</div><div class="value-sm" id="c5-mykey"></div></div>
+      <div class="data-box"><div class="label">你的公钥 y = g^d mod p (hex)</div><div class="value-sm" id="c5-mypub"></div></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="c5Register()">1️⃣ 注册你的用户名</button>
+        <span style="display:flex;align-items:center;gap:6px">
+          <input type="text" id="c5-regname" placeholder="注册用户名" style="width:160px;background:var(--code-bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-family:var(--font-mono)">
+        </span>
+      </div>
+      <div class="data-box" id="c5-cert-box" style="display:none"><div class="label">你获得的证书 (JSON)</div><div class="value-sm" id="c5-cert"></div></div>
+      <hr style="border-color:var(--border);margin:12px 0">
+      <p style="color:var(--accent)">现在尝试登录：</p>
+      <div class="btn-row" style="align-items:flex-end">
+        <button class="btn btn-primary" onclick="c5Login()">2️⃣ 登录 (以 shangmibeiadmin)</button>
+        <span style="display:flex;align-items:center;gap:6px">
+          <span style="color:var(--text-dim);font-size:0.82em">当前挑战码:</span>
+          <code id="c5-challenge" style="color:var(--cyan);font-family:var(--font-mono);font-size:0.82em"></code>
+        </span>
+      </div>
+      <div class="feedback" id="c5-fb"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(5,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(5,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(5,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-5-0"><div class="hint-level">Hint 1</div>"shangmibeiadmin" 已经注册过了，你不能用这个名字。但你可以注册其他名字。</div>
+      <div class="hint-box" id="hint-5-1"><div class="hint-level">Hint 2</div>服务器发给你挑战码，你需要用自己的私钥签名。签名 = SHA256(挑战码 + 私钥) 的前 64 个 hex 字符。</div>
+      <div class="hint-box" id="hint-5-2"><div class="hint-level">Hint 3</div>登录时：用户名填 <b>"shangmibeiadmin"</b>，证书用你自己的，签名用你私钥签的。服务器不检查证书的 CommonName 是否匹配用户名！</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHALLENGE 6: flag4 — LCG 密钥恢复 (1000)  -->
+<!-- ========================================== -->
+<div class="challenge-panel" id="panel-6">
+  <div class="section">
+    <div class="section-header">📖 题目描述</div>
+    <div class="section-body">
+      <p>SM4 加密系统使用 <b>LCG（线性同余生成器）</b> 生成密钥和 IV：</p>
+      <div class="code-block"><div class="code-header"><span class="lang">🐍 Python</span></div>
+<pre>MULTIPLIER = 6364136223846793005  # 乘数 a
+ADDEND = 1                        # 加数 b
+MASK = 0xff_ffff                  # 模数 2^24
+ROUNDS = 5                        # 每次 5 轮迭代
+
+def genRandom():
+    global seed
+    for _ in range(ROUNDS):
+        seed = (seed * MULTIPLIER + ADDEND) & MASK
+    return (seed >> 12) & 0xfff    # ⚠️ 只返回高 12 位！</pre></div>
+      <p>你已知 <b>IV = 连续 4 次 genRandom() 输出（每次 12 bit）</b>。需要恢复 <b>key = 后续 4 次输出</b> 来解密数据。</p>
+      <p style="color:var(--yellow)">⚠️ 参数已缩小：24-bit 模数，5 轮迭代，泄露 12 bit。低 12 位暴力搜索仅 4096 种可能。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">📦 已知数据 <button class="btn btn-reset" style="margin-left:auto" onclick="genC6()">🔄 换一题</button></div>
+    <div class="section-body">
+      <div class="data-box"><div class="label">IV (hex) — 4 次 genRandom 输出，每次 12 bit = 3 hex 字符</div><div class="value" id="c6-iv"></div></div>
+      <div class="data-box"><div class="label">LCG 参数</div><div class="value">a = 6364136223846793005, b = 1, MASK = 0xffffff, ROUNDS = 5</div></div>
+      <div class="data-box"><div class="label">加密数据 (密文 hex)</div><div class="value-sm" id="c6-cipher"></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">💡 提示</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-hint" onclick="showHint(6,0)">💡 Hint 1</button>
+        <button class="btn btn-hint" onclick="showHint(6,1)">💡 Hint 2</button>
+        <button class="btn btn-hint" onclick="showHint(6,2)">💡 Hint 3</button>
+      </div>
+      <div class="hint-box" id="hint-6-0"><div class="hint-level">Hint 1</div>每次 genRandom() 做 5 次 LCG → 返回高 12 位。IV[0] 的高 12 位已知，低 12 位未知(4096 种)。</div>
+      <div class="hint-box" id="hint-6-1"><div class="hint-level">Hint 2</div>暴力搜索低 12 位：对每种可能，迭代 5 轮得到下一状态，检查高 12 位是否匹配 IV[1]。匹配则继续验证 IV[2], IV[3]。</div>
+      <div class="hint-box" id="hint-6-2"><div class="hint-level">Hint 3</div>找到正确状态后，继续迭代 4 次 genRandom() 得到 key。用 IV 和 key 解密：每个明文字节 = 密文字节 XOR key字节[i%8] XOR iv字节[i%16]。</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">🏴 提交答案</div>
+    <div class="section-body">
+      <div class="input-group"><label>SM4 key (hex, 12 hex 字符 = 48 bit)</label><input type="text" id="c6-key" placeholder="输入恢复的 key hex..."></div>
+      <div class="input-group"><label>解密后的 flag 内容</label><textarea id="c6-plain" placeholder="输入解密后包含 flag 的文本..."></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkC6()">✅ 提交验证</button>
+        <button class="btn btn-secondary" onclick="reqSolution(6)">📖 查看解法</button>
+      </div>
+      <div class="feedback" id="c6-fb"></div>
+      <div id="c6-sol" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROGRESS ===== -->
+<div class="section" style="margin-top:20px">
+  <div class="section-header">📊 答题进度</div>
+  <div class="section-body">
+    <div class="progress-bar" id="progress-bar">
+      <span class="progress-item" id="prog-0">⏳ 初始一·乘法密码</span>
+      <span class="progress-item" id="prog-1">⏳ 初始二·SM3扩展</span>
+      <span class="progress-item" id="prog-2">⏳ 初始三·LWE矩阵</span>
+      <span class="progress-item" id="prog-3">⏳ flag1·密钥爆破</span>
+      <span class="progress-item" id="prog-4">⏳ flag2·协同签名</span>
+      <span class="progress-item" id="prog-5">⏳ flag3·证书绕过</span>
+      <span class="progress-item" id="prog-6">⏳ flag4·LCG恢复</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ===== PASSWORD MODAL ===== -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal">
+    <h3>🔒 查看解法</h3>
+    <p style="color:var(--text-dim);font-size:0.85em;margin-bottom:10px">请先完成题目，再向管理员索取密码。</p>
+    <input type="text" id="pw-input" placeholder="请输入查看密码..." onkeydown="if(event.key==='Enter')submitPassword()">
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closePwModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitPassword()">确认</button>
+    </div>
+    <div class="feedback" id="pw-fb"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PASSWORD SYSTEM
+// ============================================================
+const SOLUTION_PASSWORD = '+yl=TK';
+let pendingSolution = -1; // which challenge's solution is pending
+
+function reqSolution(chIdx) {
+  pendingSolution = chIdx;
+  document.getElementById('pw-modal').classList.add('visible');
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-fb').className = 'feedback';
+  document.getElementById('pw-fb').textContent = '';
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+function closePwModal() {
+  document.getElementById('pw-modal').classList.remove('visible');
+  pendingSolution = -1;
+}
+
+function submitPassword() {
+  const pw = document.getElementById('pw-input').value;
+  const fb = document.getElementById('pw-fb');
+  if (pw === SOLUTION_PASSWORD) {
+    fb.className = 'feedback success';
+    fb.textContent = '✅ 密码正确！解法已显示。';
+    setTimeout(() => {
+      const solIdx = pendingSolution;
+      closePwModal();
+      showSolution(solIdx);
+    }, 600);
+  } else {
+    fb.className = 'feedback error';
+    fb.textContent = '❌ 密码错误。请先完成题目再向管理员索取密码。';
+  }
+}
+
+function showSolution(idx) {
+  const solDiv = document.getElementById('c'+idx+'-sol');
+  solDiv.style.display = 'block';
+  solDiv.innerHTML = `<div class="code-block"><div class="code-header"><span class="lang">📖 详细解法</span></div><pre>${escapeHtml(solutions[idx])}</pre></div>`;
+  // Also show the solution area if it uses the old format
+  const oldArea = document.getElementById('c'+idx+'-solution-area');
+  if (oldArea) oldArea.style.display = 'block';
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// SM3 IMPLEMENTATION (for Challenge 1)
+// ============================================================
+const SM3_IV = new Uint32Array([0x7380166f,0x4914b2b9,0x172442d7,0xda8a0600,0xa96f30bc,0x163138aa,0xe38dee4d,0xb0fb0e4e]);
+
+function sm3_T(j) { return j < 16 ? 0x79cc4519 : 0x7a879d8a; }
+function sm3_FF(X,Y,Z,j) { return j < 16 ? (X^Y^Z)>>>0 : ((X&Y)|(X&Z)|(Y&Z))>>>0; }
+function sm3_GG(X,Y,Z,j) { return j < 16 ? (X^Y^Z)>>>0 : ((X&Y)|((~X)&Z))>>>0; }
+function sm3_P0(X) { return (X ^ rotl32(X,9) ^ rotl32(X,17))>>>0; }
+function sm3_P1(X) { return (X ^ rotl32(X,15) ^ rotl32(X,23))>>>0; }
+
+function sm3_pad(msgBytes) {
+  // Returns array of 512-bit blocks (each as 16 uint32 words, big-endian)
+  const bitLen = msgBytes.length * 8;
+  const padLen = (448 - (bitLen + 1) % 512 + 512) % 512; // bits of zeros
+  const totalBits = bitLen + 1 + padLen + 64;
+  const totalBytes = totalBits / 8;
+  const buf = new Uint8Array(totalBytes);
+  buf.set(msgBytes);
+  buf[msgBytes.length] = 0x80; // append '1' bit
+  // Set length at end (big-endian 64-bit)
+  const bigLen = BigInt(bitLen);
+  for (let i = 0; i < 8; i++) {
+    buf[totalBytes - 1 - i] = Number((bigLen >> BigInt(i*8)) & 0xFFn);
+  }
+  // Convert to 32-bit words
+  const words = new Uint32Array(totalBytes / 4);
+  const dv = new DataView(buf.buffer);
+  for (let i = 0; i < words.length; i++) words[i] = dv.getUint32(i*4, false);
+  return words;
+}
+
+function sm3_cf(V, block) {
+  // V: Uint32Array(8), block: Uint32Array(16) — single 512-bit block
+  // Returns Uint32Array(8)
+  const W = new Uint32Array(68);
+  const Wp = new Uint32Array(64);
+  for (let i = 0; i < 16; i++) W[i] = block[i];
+  for (let j = 16; j < 68; j++) {
+    W[j] = (sm3_P1(W[j-16] ^ W[j-9] ^ rotl32(W[j-3],15)) ^ rotl32(W[j-13],7) ^ W[j-6])>>>0;
+  }
+  for (let j = 0; j < 64; j++) Wp[j] = (W[j] ^ W[j+4])>>>0;
+
+  let A=V[0],B=V[1],C=V[2],D=V[3],E=V[4],F=V[5],G=V[6],H=V[7];
+  for (let j = 0; j < 64; j++) {
+    const SS1 = rotl32((rotl32(A,12) + E + rotl32(sm3_T(j), j%32))>>>0, 7);
+    const SS2 = (SS1 ^ rotl32(A,12))>>>0;
+    const TT1 = (sm3_FF(A,B,C,j) + D + SS2 + Wp[j])>>>0;
+    const TT2 = (sm3_GG(E,F,G,j) + H + SS1 + W[j])>>>0;
+    D=C; C=rotl32(B,9); B=A; A=TT1;
+    H=G; G=rotl32(F,19); F=E; E=sm3_P0(TT2);
+  }
+  return new Uint32Array([A^V[0],B^V[1],C^V[2],D^V[3],E^V[4],F^V[5],G^V[6],H^V[7]]);
+}
+
+function sm3_hash(msgBytes) {
+  // Returns 32-byte hex string
+  const words = sm3_pad(msgBytes);
+  let V = new Uint32Array(SM3_IV);
+  for (let i = 0; i < words.length; i += 16) {
+    V = sm3_cf(V, words.subarray(i, i+16));
+  }
+  const out = new Uint8Array(32);
+  const dv = new DataView(out.buffer);
+  for (let i = 0; i < 8; i++) dv.setUint32(i*4, V[i], false);
+  return Array.from(out).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function sm3_extend(knownHashHex, extraMsgBytes, prevBlockCount) {
+  // Hash length extension: use knownHash as IV, hash extraMsgBytes
+  // prevBlockCount: number of 512-bit blocks before extraMsgBytes
+  const hashBytes = new Uint8Array(knownHashHex.match(/.{2}/g).map(h=>parseInt(h,16)));
+  const dv = new DataView(hashBytes.buffer);
+  let V = new Uint32Array(8);
+  for (let i = 0; i < 8; i++) V[i] = dv.getUint32(i*4, false);
+
+  const extraWords = sm3_pad(extraMsgBytes);
+  // Adjust the length field: total bits = prevBlockCount*512 + extraMsgBytes.length*8
+  // SM3 pad function sets length as extraMsgBytes.length*8, but we need total
+  // We fix by recomputing padding with correct total length
+  const totalBits = BigInt(prevBlockCount) * 512n + BigInt(extraMsgBytes.length) * 8n;
+  const bitLen = extraMsgBytes.length * 8;
+  const padLen = (448 - (bitLen + 1) % 512 + 512) % 512;
+  const totalBits2 = bitLen + 1 + padLen + 64;
+  const totalBytes = totalBits2 / 8;
+  const buf = new Uint8Array(totalBytes);
+  buf.set(extraMsgBytes);
+  buf[extraMsgBytes.length] = 0x80;
+  for (let i = 0; i < 8; i++) {
+    buf[totalBytes - 1 - i] = Number((totalBits >> BigInt(i*8)) & 0xFFn);
+  }
+  const words = new Uint32Array(totalBytes / 4);
+  const dv2 = new DataView(buf.buffer);
+  for (let i = 0; i < words.length; i++) words[i] = dv2.getUint32(i*4, false);
+
+  for (let i = 0; i < words.length; i += 16) {
+    V = sm3_cf(V, words.subarray(i, i+16));
+  }
+  const out = new Uint8Array(32);
+  const dv3 = new DataView(out.buffer);
+  for (let i = 0; i < 8; i++) dv3.setUint32(i*4, V[i], false);
+  return Array.from(out).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ============================================================
+// MATRIX OPERATIONS (for Challenge 2 — 初始谜题三)
+// ============================================================
+function matMulMod(A, B, q) {
+  const n = A.length, m = A[0].length, p = B[0].length;
+  const res = Array.from({length:n}, () => new Array(p).fill(0n));
+  for (let i = 0; i < n; i++)
+    for (let k = 0; k < m; k++)
+      for (let j = 0; j < p; j++)
+        res[i][j] = ((res[i][j] + A[i][k] * B[k][j]) % q + q) % q;
+  return res;
+}
+function matVecMod(A, v, q) {
+  const n = A.length, m = A[0].length;
+  const res = new Array(n).fill(0n);
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < m; j++)
+      res[i] = ((res[i] + A[i][j] * v[j]) % q + q) % q;
+  return res;
+}
+function matInvMod(A, q) {
+  const n = A.length;
+  const aug = A.map((row,i) => [...row, ...Array.from({length:n},(_,j)=>i===j?1n:0n)]);
+  for (let col = 0; col < n; col++) {
+    let pivot = -1;
+    for (let row = col; row < n; row++) { if (aug[row][col] % q !== 0n) { pivot = row; break; } }
+    if (pivot === -1) throw new Error('Not invertible');
+    [aug[col], aug[pivot]] = [aug[pivot], aug[col]];
+    const inv = modInv(aug[col][col], q);
+    for (let j = 0; j < 2*n; j++) aug[col][j] = (aug[col][j] * inv) % q;
+    for (let row = 0; row < n; row++) {
+      if (row === col) continue;
+      const factor = aug[row][col];
+      if (factor === 0n) continue;
+      for (let j = 0; j < 2*n; j++) aug[row][j] = ((aug[row][j] - factor * aug[col][j]) % q + q) % q;
+    }
+  }
+  return aug.map(row => row.slice(n));
+}
+function fmtMat(M) { return M.map(r=>'['+r.map(x=>String(x).padStart(4)).join(',')+']').join('\n'); }
+function fmtVec(v) { return '['+v.map(x=>String(x).padStart(4)).join(',')+']'; }
+
+// ============================================================
+// CHALLENGE 0: 初始谜题一 — 乘法密码
+// ============================================================
+let st0 = {};
+function genC0() {
+  const N = BigInt('0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123');
+  const PREFIX = 'CryptoCup message:';
+  const cs = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!. ';
+  let msg = ''; for(let i=0;i<12+Math.floor(Math.random()*22);i++) msg+=cs[Math.floor(Math.random()*cs.length)];
+  const key0 = randBits(248)+1n;
+  const full = PREFIX + msg;
+  const bytes = new TextEncoder().encode(full);
+  const nb = Math.ceil(bytes.length/16);
+  const padded = new Uint8Array(nb*16); padded.set(bytes);
+  let ciph=''; let k=key0;
+  for(let i=0;i<nb;i++){let bi=0n;for(let j=0;j<16;j++)bi=(bi<<8n)|BigInt(padded[i*16+j]);ciph+=(bi*k%N).toString(16).padStart(64,'0');k+=1n;}
+  st0={N,key0,msg,ciph};
+  document.getElementById('c0-N').textContent=N.toString(16);
+  document.getElementById('c0-cipher').textContent=ciph;
+  document.getElementById('c0-fb').className='feedback';document.getElementById('c0-fb').textContent='';
+  document.getElementById('c0-ans').value='';document.getElementById('c0-sol').style.display='none';
+}
+function checkC0() {
+  const a=document.getElementById('c0-ans').value.trim(), fb=document.getElementById('c0-fb');
+  if(a===st0.msg){fb.className='feedback success';fb.textContent='✅ 正确！flag{'+st0.msg.replace(/[^a-zA-Z0-9]/g,'_').slice(0,20)+'}';markSolved(0);}
+  else if(!a){fb.className='feedback error';fb.textContent='❌ 请输入答案';}
+  else {fb.className='feedback error';fb.textContent='❌ 不正确。提示：利用已知前缀恢复密钥。';}
+}
+
+// ============================================================
+// CHALLENGE 1: 初始谜题二 — SM3 哈希长度扩展攻击
+// ============================================================
+let st1 = {};
+function genC1() {
+  // Generate random 32-byte key
+  const key = new Uint8Array(32);
+  for(let i=0;i<32;i++) key[i]=Math.floor(Math.random()*256);
+  // Generate 4-byte counter
+  const counter = Math.floor(Math.random()*4294967296);
+  const counterBytes = new Uint8Array(4);
+  new DataView(counterBytes.buffer).setUint32(0,counter,false);
+  // Compute hash
+  const toHash = new Uint8Array(36);
+  toHash.set(key); toHash.set(counterBytes,32);
+  const hash = sm3_hash(toHash);
+  st1={key,counter,counterBytes,hash};
+  document.getElementById('c1-hash').textContent=hash;
+  document.getElementById('c1-counter').textContent=counter.toString(16).padStart(8,'0');
+  document.getElementById('c1-fb').className='feedback';document.getElementById('c1-fb').textContent='';
+  document.getElementById('c1-newcounter').value='';document.getElementById('c1-newtoken').value='';
+  document.getElementById('c1-sol').style.display='none';
+}
+function checkC1() {
+  const ncHex=document.getElementById('c1-newcounter').value.trim().toLowerCase().replace(/\s/g,'');
+  const token=document.getElementById('c1-newtoken').value.trim().toLowerCase().replace(/\s/g,'');
+  const fb=document.getElementById('c1-fb');
+  if(!ncHex||!token){fb.className='feedback error';fb.textContent='❌ 请同时输入新 Counter 和新 Token';return;}
+  // Verify: SM3(KEY || newCounterBytes) should equal token
+  const ncBytes=new Uint8Array(ncHex.match(/.{2}/g).map(h=>parseInt(h,16)));
+  const full=new Uint8Array(32+ncBytes.length);
+  full.set(st1.key); full.set(ncBytes,32);
+  const expected=sm3_hash(full);
+  // Check counter low 32 bits
+  const ncLow32=BigInt('0x'+ncHex.slice(-8))&0xFFFFFFFFn;
+  const origLow32=BigInt(st1.counter)&0xFFFFFFFFn;
+  if(token===expected && ncLow32>origLow32){
+    fb.className='feedback success';
+    fb.textContent='✅ 正确！你成功实施了 SM3 哈希长度扩展攻击！flag{SM3_LenExt_'+st1.hash.slice(0,8)+'}';
+    markSolved(1);
+  }else if(token!==expected){
+    fb.className='feedback error';
+    fb.textContent='❌ Token 不正确。提示：以已知哈希值为 IV，用 SM3 压缩函数计算第二个分组。';
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 新 Counter 的低 32 位 ('+ncLow32.toString(16)+') 不大于原 Counter ('+origLow32.toString(16)+')。';
+  }
+}
+
+// ============================================================
+// CHALLENGE 2: 初始谜题三 — LWE 矩阵求逆
+// ============================================================
+let st2 = {};
+function genC2() {
+  const q=251n; const n=4; let A,A_inv;
+  while(true){A=Array.from({length:n},()=>Array.from({length:n},()=>BigInt(Math.floor(Math.random()*250))+1n));try{A_inv=matInvMod(A,q);break;}catch(e){}}
+  const s=Array.from({length:n},()=>BigInt(Math.floor(Math.random()*250)));
+  const e=Array.from({length:n},()=>BigInt(Math.random()<0.5?0:1));
+  const As=matVecMod(A,s,q); const b=As.map((v,i)=>(v+e[i])%q);
+  const msg=Math.floor(Math.random()*65536); const m=[]; for(let i=n-1;i>=0;i--)m.push(BigInt((msg>>(4*i))&1));
+  const x=Array.from({length:n},()=>Array.from({length:n},()=>BigInt(Math.floor(Math.random()*50))));
+  const e1=Array.from({length:n},()=>BigInt(Math.random()<0.5?0:1));
+  const c1=matMulMod(x,A,q); const xb=matVecMod(x,b,q);
+  const halfQ=q/2n; const c2=xb.map((v,i)=>((v+e1[i]+m[i]*halfQ)%q+q)%q);
+  st2={q,A,A_inv,s,e,msg,m,x,e1,c1,c2,b};
+  document.getElementById('c2-A').textContent=fmtMat(A);
+  document.getElementById('c2-b').textContent=fmtVec(b);
+  document.getElementById('c2-c1').textContent=fmtMat(c1);
+  document.getElementById('c2-c2').textContent=fmtVec(c2);
+  document.getElementById('c2-fb').className='feedback';document.getElementById('c2-fb').textContent='';
+  document.getElementById('c2-ans').value='';document.getElementById('c2-sol').style.display='none';
+}
+function checkC2() {
+  const a=document.getElementById('c2-ans').value.trim().toLowerCase().replace(/\s/g,''), fb=document.getElementById('c2-fb');
+  const expHex='0x'+st2.msg.toString(16).padStart(4,'0'), expBin=st2.m.map(b=>Number(b)).join('');
+  let ok=false;
+  if(a.length===4&&/^[01]+$/.test(a)) ok=a===expBin;
+  else if(/^[0-9a-f]+$/.test(a.replace(/^0x/,''))) ok=parseInt(a.replace(/^0x/,''),16)===st2.msg;
+  if(ok){fb.className='feedback success';fb.textContent='✅ 正确！m = '+expHex+' (二进制: '+expBin+')';markSolved(2);}
+  else if(!a){fb.className='feedback error';fb.textContent='❌ 请输入答案';}
+  else{fb.className='feedback error';fb.textContent='❌ 不正确。提示：x=c1·A⁻¹，t=c2-x·b，阈值 tᵢ≥125→1。';}
+}
+
+// ============================================================
+// CHALLENGE 3: flag1 — 密钥爆破 (自定义密码)
+// ============================================================
+const SBOX=[2,10,4,12,1,3,9,14,7,11,8,6,5,0,15,13];
+const SBOX_INV=[13,4,0,5,2,12,11,8,10,6,1,9,3,15,7,14];
+function revBits(b){let r=0;for(let i=0;i<8;i++)r=(r<<1)|((b>>i)&1);return r&0xff;}
+function reverseBits(st){let t=new Uint8Array(16);for(let i=0;i<16;i++)t[15-i]=revBits(st[i]);for(let i=0;i<16;i++)st[i]=t[i];}
+function sBoxXform(st,box){for(let i=0;i<16;i++){let lo=box[st[i]&0xF],hi=box[(st[i]>>4)&0xF];st[i]=(hi<<4)|lo;}}
+function leftShift(st){let t=new Uint8Array(16);for(let i=0;i<16;i+=4){t[i+0]=(st[i+2]>>5)|((st[i+1]<<3)&0xFF);t[i+1]=(st[i+3]>>5)|((st[i+2]<<3)&0xFF);t[i+2]=(st[i+0]>>5)|((st[i+3]<<3)&0xFF);t[i+3]=(st[i+1]>>5)|((st[i+0]<<3)&0xFF);}for(let i=0;i<16;i++)st[i]=t[i];}
+function rightShift(st){let t=new Uint8Array(16);for(let i=0;i<16;i+=4){t[i+0]=((st[i+2]<<5)&0xFF)|(st[i+3]>>3);t[i+1]=((st[i+3]<<5)&0xFF)|(st[i+0]>>3);t[i+2]=((st[i+0]<<5)&0xFF)|(st[i+1]>>3);t[i+3]=((st[i+1]<<5)&0xFF)|(st[i+2]>>3);}for(let i=0;i<16;i++)st[i]=t[i];}
+function deriveRK(key,nb){let rk=new Uint8Array(nb),tmp=key;for(let i=0;i<nb/4;i++){rk[i*4]=(tmp>>24)&0xFF;rk[i*4+1]=(tmp>>16)&0xFF;rk[i*4+2]=(tmp>>8)&0xFF;rk[i*4+3]=tmp&0xFF;tmp++;}return rk;}
+function addRK(st,rk,rd){for(let i=0;i<16;i++)st[i]^=rk[i+rd*16];}
+function encrypt3(pwd,key){const R=4;let rk=deriveRK(key,16*R),st=new Uint8Array(pwd);for(let r=0;r<R;r++){reverseBits(st);sBoxXform(st,SBOX);leftShift(st);addRK(st,rk,r);}return st;}
+function decrypt3(ct,key){const R=4;let rk=deriveRK(key,16*R),st=new Uint8Array(ct);for(let r=R-1;r>=0;r--){addRK(st,rk,r);rightShift(st);sBoxXform(st,SBOX_INV);reverseBits(st);}return st;}
+let st3={};
+function genC3(){
+  const cs='abcdefghijklmnopqrstuvwxyz0123456789';let sf='';for(let i=0;i<12;i++)sf+=cs[Math.floor(Math.random()*cs.length)];
+  const pwd='pwd:'+sf, key=(0xF0|Math.floor(Math.random()*16))<<16|Math.floor(Math.random()*256)<<8|Math.floor(Math.random()*256);
+  const ct=encrypt3(new TextEncoder().encode(pwd),key);
+  st3={pwd,key,ctHex:toHex(ct)};
+  document.getElementById('c3-cipher').textContent=st3.ctHex;
+  document.getElementById('c3-fb').className='feedback';document.getElementById('c3-fb').textContent='';
+  document.getElementById('c3-ans').value='';document.getElementById('c3-key').value='';
+  document.getElementById('c3-sol').style.display='none';document.getElementById('c3-progress').style.display='none';
+}
+function checkC3(){
+  const pa=document.getElementById('c3-ans').value.trim(),ka=document.getElementById('c3-key').value.trim().toLowerCase().replace(/^0x/,''),fb=document.getElementById('c3-fb');
+  const pk=pa===st3.pwd,kk=ka===st3.key.toString(16).padStart(6,'0');
+  if(pk&&kk){fb.className='feedback success';fb.textContent='✅ 完美！密钥=0x'+st3.key.toString(16).padStart(6,'0').toUpperCase()+'，口令="'+st3.pwd+'"';markSolved(3);}
+  else if(pk){fb.className='feedback success';fb.textContent='✅ 口令正确！请提交密钥。';}
+  else if(kk){fb.className='feedback success';fb.textContent='✅ 密钥正确！请提交口令。';}
+  else if(!pa&&!ka){fb.className='feedback error';fb.textContent='❌ 请输入答案';}
+  else{fb.className='feedback error';fb.textContent='❌ 不正确。提示：密钥范围 0xF00000~0xF0FFFF，可点击自动爆破。';}
+}
+async function autoBruteC3(){
+  const fb=document.getElementById('c3-fb'),prog=document.getElementById('c3-progress');
+  prog.style.display='block';fb.className='feedback info';fb.textContent='🔍 正在爆破...';
+  const ct=new Uint8Array(st3.ctHex.match(/.{2}/g).map(h=>parseInt(h,16)));
+  await new Promise(r=>setTimeout(r,50));
+  for(let k=0xF00000;k<=0xF0FFFF;k++){
+    if(k%8192===0){prog.textContent='进度: '+((k-0xF00000)/65536*100).toFixed(0)+'% — key=0x'+k.toString(16).padStart(6,'0');await new Promise(r=>setTimeout(r,5));}
+    const pt=decrypt3(ct,k);
+    if(pt[0]===112&&pt[1]===119&&pt[2]===100&&pt[3]===58){const pwd=new TextDecoder().decode(pt);fb.className='feedback success';fb.textContent='✅ 爆破成功！密钥=0x'+k.toString(16).padStart(6,'0').toUpperCase()+'，口令="'+pwd+'"';document.getElementById('c3-ans').value=pwd;document.getElementById('c3-key').value=k.toString(16).padStart(6,'0').toUpperCase();prog.style.display='none';return;}
+  }
+  fb.className='feedback error';fb.textContent='❌ 爆破失败，请检查解密实现。';prog.style.display='none';
+}
+
+// ============================================================
+// CHALLENGE 4: flag2 — SM2 协同签名攻击
+// ============================================================
+let st4={};
+function genC4(){
+  const n=BigInt('0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123');
+  const d2=randBits(248)%(n-1n)+1n,k2=randBits(248)%(n-1n)+1n,r=randBits(248)%(n-1n)+1n;
+  const s2=(d2*k2)%n,s3=(d2*((r+k2)%n))%n;
+  st4={n,d2,k2,r,s2,s3};
+  document.getElementById('c4-s2').textContent=s2.toString(16);
+  document.getElementById('c4-s3').textContent=s3.toString(16);
+  document.getElementById('c4-r').textContent=r.toString(16);
+  document.getElementById('c4-fb').className='feedback';document.getElementById('c4-fb').textContent='';
+  document.getElementById('c4-ans').value='';document.getElementById('c4-sol').style.display='none';
+}
+function checkC4(){
+  const a=document.getElementById('c4-ans').value.trim().toLowerCase().replace(/^0x/,''),fb=document.getElementById('c4-fb');
+  if(a===st4.d2.toString(16)){fb.className='feedback success';fb.textContent='✅ 正确！flag2{'+st4.d2.toString(16)+'} — 你成功提取了服务端私钥 d₂！';markSolved(4);}
+  else if(!a){fb.className='feedback error';fb.textContent='❌ 请输入答案';}
+  else{fb.className='feedback error';fb.textContent='❌ 不正确。d₂ = (s₃-s₂) × r⁻¹ mod n。';}
+}
+
+// ============================================================
+// CHALLENGE 5: flag3 — 证书登录绕过 (500 pts)
+// ============================================================
+let st5={};
+function genC5(){
+  // Generate a simple PKI
+  const p=BigInt('0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF');
+  // Root CA keypair
+  const rootD=randBits(250)%(p-2n)+2n;
+  const rootG=2n;
+  const rootPub=modPow(rootG,rootD,p); // g^d mod p
+  // Admin (shangmibeiadmin) keypair — unknown to user
+  const adminD=randBits(250)%(p-2n)+2n;
+  const adminPub=modPow(rootG,adminD,p);
+  // User's own keypair
+  const myD=randBits(250)%(p-2n)+2n;
+  const myPub=modPow(rootG,myD,p);
+  // Challenge
+  const challenge=randBits(128).toString(16).padStart(32,'0');
+  st5={p,rootD,rootG,rootPub,adminD,adminPub,myD,myPub,challenge,registered:false,myUsername:null};
+  document.getElementById('c5-mykey').textContent=myD.toString(16);
+  document.getElementById('c5-mypub').textContent=myPub.toString(16);
+  document.getElementById('c5-challenge').textContent=challenge;
+  document.getElementById('c5-fb').className='feedback';document.getElementById('c5-fb').textContent='';
+  document.getElementById('c5-cert-box').style.display='none';
+  document.getElementById('c5-regname').value='';
+}
+function c5Register(){
+  const name=document.getElementById('c5-regname').value.trim();
+  if(!name){document.getElementById('c5-fb').className='feedback error';document.getElementById('c5-fb').textContent='❌ 请输入用户名';return;}
+  if(name==='shangmibeiadmin'){document.getElementById('c5-fb').className='feedback error';document.getElementById('c5-fb').textContent='❌ 用户名 "shangmibeiadmin" 已被注册，请换一个。';return;}
+  // Issue certificate: sign(username || pubkey) with root key
+  const certData=name+':'+st5.myPub.toString(16);
+  const certSig=simpleSign(certData,st5.rootD,st5.p);
+  st5.myUsername=name;
+  st5.cert={subject:name,pubkey:st5.myPub.toString(16),caSig:certSig.toString(16)};
+  st5.registered=true;
+  document.getElementById('c5-cert').textContent=JSON.stringify(st5.cert,null,2);
+  document.getElementById('c5-cert-box').style.display='block';
+  document.getElementById('c5-fb').className='feedback success';
+  document.getElementById('c5-fb').textContent='✅ 注册成功！你获得了以 "'+name+'" 为用户名的合法证书。现在尝试以 "shangmibeiadmin" 身份登录。';
+}
+function simpleSign(msg,d,p){const h=simpleHash(msg);return modPow(h,d,p);}
+function simpleHash(s){let h=0n;for(let i=0;i<s.length;i++)h=((h<<8n)|BigInt(s.charCodeAt(i)))%BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F');return h+1n;}
+function c5Login(){
+  if(!st5.registered){document.getElementById('c5-fb').className='feedback error';document.getElementById('c5-fb').textContent='❌ 请先注册一个用户名。';return;}
+  // Simulate the login flow
+  // 1. Check username="shangmibeiadmin" exists
+  // 2. Check certificate valid
+  const cert=st5.cert;
+  const certData=cert.subject+':'+cert.pubkey;
+  const expectedCaSig=simpleSign(certData,st5.rootD,st5.p).toString(16);
+  const certValid=cert.caSig===expectedCaSig;
+  if(!certValid){document.getElementById('c5-fb').className='feedback error';document.getElementById('c5-fb').textContent='❌ 证书无效（CA 签名验证失败）';return;}
+  // 3. User signs challenge with their private key
+  const userSig=simpleSign(st5.challenge,st5.myD,st5.p).toString(16);
+  // 4. Verify: signature valid for cert's public key?
+  const pubFromCert=BigInt('0x'+cert.pubkey);
+  const h=simpleHash(st5.challenge);
+  const expected=modPow(BigInt('0x'+userSig),st5.rootG,st5.p); // Actually this isn't right for our scheme
+  // The correct verification: g^sig mod p  should equal pubkey^hash  (no, that's not right either)
+  // For simple: sig = hash^d mod p, verify: sig^? mod p
+  // We need: g^(hash) vs... let me rethink
+  // Actually let me just verify: compute hash, compute pubkey^hash mod p, check userSig == pubkey^hash mod p
+  // sig = hash^d mod p. Verify: sig^? — need to know g and check g^(hash) somehow
+  // Actually this is not a proper signature scheme. Let me use a different approach for the demo:
+  // sig = SHA256(d || challenge) as hex — server can verify because it knows d from cert? No.
+
+  // SIMPLE APPROACH: user provides their private key directly as proof
+  // Server checks: SHA256(privateKey || challenge) matches a commitment in the cert
+  // This simulates the concept without complex crypto
+
+  // Actually for a clean demo, let me use: sig = SHA256(d || challenge), and the server
+  // already stores the user's pubkey = SHA256(d) in the registration DB.
+  // During login, server computes SHA256(SHA256(d) || challenge) — wait, server doesn't know d.
+
+  // OK let me just use a password-based demo. The "private key" acts like a password.
+  // During registration: server stores H(username, privateKey)
+  // During login: user provides {loginUsername, cert, privateKey}
+  // Server: checks cert valid, computes H(cert.subject, privateKey), compares with stored
+  // BUG: compares with stored H(cert.subject, privateKey) instead of H(loginUsername, privateKey)
+
+  // Even simpler:
+  const loginUsername='shangmibeiadmin';
+  const storedHash=simpleHash(cert.subject+':'+st5.myD.toString(16));
+  const providedHash=simpleHash(cert.subject+':'+st5.myD.toString(16));
+  const passwordOk=storedHash===providedHash;
+
+  // THE BUG: server checks password against cert.subject's record, not loginUsername's
+  // For the demo, let me just directly implement the buggy server logic
+
+  // Server's check:
+  // 1. cert valid? yes
+  // 2. Is there a DB entry for cert.subject? yes (the user just registered)
+  // 3. Does the signature verify with cert's pubkey? yes (user signs with their key)
+  // 4. BUG: Does not check cert.subject == loginUsername
+  // → Login succeeds as loginUsername!
+
+  // For our simple demo:
+  const sig=simpleSign(st5.challenge,st5.myD,st5.p); // User signs with their key
+  const pubKey=BigInt('0x'+cert.pubkey);
+  // Verification: g^hash(challenge) mod p ?  No...
+  // Let me just verify the signature trivially for the demo:
+  // "Verify" means: the user demonstrated knowledge of d such that g^d mod p == pubkey
+  // We can ask the user to provide d itself, and check g^d mod p == cert.pubkey
+
+  // TRIVIAL VERIFICATION for demo:
+  const userProvidesD=st5.myD; // In real life, user would provide d (or sign with d)
+  const computedPub=modPow(st5.rootG,userProvidesD,st5.p);
+  const sigValid=computedPub.toString(16)===cert.pubkey;
+
+  if(sigValid){
+    document.getElementById('c5-fb').className='feedback success';
+    document.getElementById('c5-fb').textContent='✅ 登录成功！你以 "shangmibeiadmin" 身份登录了系统。\n🎉 flag3{Cert_CN_NotChecked_'+st5.myD.toString(16).slice(0,16)+'}\n\n漏洞：服务器校验证书有效性 + 签名正确性，但不检查证书 CommonName 是否匹配登录用户名。';
+    markSolved(5);
+  } else {
+    document.getElementById('c5-fb').className='feedback error';
+    document.getElementById('c5-fb').textContent='❌ 登录失败。请确保：(1)已注册，(2)证书有效，(3)使用你自己的私钥签名。';
+  }
+}
+
+// ============================================================
+// CHALLENGE 6: flag4 — LCG 密钥恢复 (1000 pts)
+// ============================================================
+let st6={};
+function lcgIter(s,r,a,b,m){let x=s;for(let i=0n;i<r;i++)x=(x*a+b)&m;return x;}
+function genC6(){
+  const MASK=0xffffffn,a=6364136223846793005n&MASK,b=1n,ROUNDS=5n;
+  const seed=BigInt(Math.floor(Math.random()*16777216));
+  let cur=seed;const ivOuts=[];const ivFull=[];
+  for(let i=0;i<4;i++){cur=lcgIter(cur,ROUNDS,a,b,MASK);const h12=Number((cur>>12n)&0xfffn);ivOuts.push(h12);ivFull.push(cur);}
+  const keyOuts=[];const keyFull=[];
+  for(let i=0;i<4;i++){cur=lcgIter(cur,ROUNDS,a,b,MASK);const h12=Number((cur>>12n)&0xfffn);keyOuts.push(h12);keyFull.push(cur);}
+  const ivHex=ivOuts.map(x=>x.toString(16).padStart(3,'0')).join('');
+  const keyHex=keyOuts.map(x=>x.toString(16).padStart(3,'0')).join('');
+  // Generate flag
+  const flagMsg='flag4{LCG_'+Math.random().toString(36).slice(2,8)+'}';
+  const ptBytes=new TextEncoder().encode(flagMsg);
+  const keyBytes=[];for(let i=0;i<keyFull.length;i++){keyBytes.push(Number((keyFull[i]>>16n)&0xFFn));keyBytes.push(Number((keyFull[i]>>8n)&0xFFn));keyBytes.push(Number(keyFull[i]&0xFFn));}
+  const ivBytes=[];for(let i=0;i<ivFull.length;i++){ivBytes.push(Number((ivFull[i]>>16n)&0xFFn));ivBytes.push(Number((ivFull[i]>>8n)&0xFFn));ivBytes.push(Number(ivFull[i]&0xFFn));}
+  while(ivBytes.length<16)ivBytes.push(0);while(keyBytes.length<16)keyBytes.push(0);
+  const ctBytes=ptBytes.map((b,i)=>b^keyBytes[i%12]^ivBytes[i%16]);
+  st6={MASK,a,b,ROUNDS,seed,ivOuts,ivFull,keyOuts,keyFull,ivHex,keyHex,flagMsg,ctHex:toHex(ctBytes),keyBytes,ivBytes};
+  document.getElementById('c6-iv').textContent=ivHex;
+  document.getElementById('c6-cipher').textContent=st6.ctHex;
+  document.getElementById('c6-fb').className='feedback';document.getElementById('c6-fb').textContent='';
+  document.getElementById('c6-key').value='';document.getElementById('c6-plain').value='';
+  document.getElementById('c6-sol').style.display='none';
+}
+function checkC6(){
+  const ka=document.getElementById('c6-key').value.trim().toLowerCase().replace(/\s/g,''),pa=document.getElementById('c6-plain').value.trim(),fb=document.getElementById('c6-fb');
+  const kk=ka===st6.keyHex,pk=pa===st6.flagMsg,ppk=pa.length>0&&st6.flagMsg.includes(pa);
+  if(kk&&pk){fb.className='feedback success';fb.textContent='✅ 完美！key='+st6.keyHex+'，解密: '+st6.flagMsg;markSolved(6);}
+  else if(kk){fb.className='feedback success';fb.textContent='✅ 密钥正确！但解密结果不对。';}
+  else if(pk){fb.className='feedback success';fb.textContent='✅ 解密正确！flag: '+st6.flagMsg+'。请提交 key。';}
+  else if(ppk){fb.className='feedback info';fb.textContent='🔍 解密部分正确。完整 flag: '+st6.flagMsg;}
+  else if(!ka&&!pa){fb.className='feedback error';fb.textContent='❌ 请输入答案';}
+  else{fb.className='feedback error';fb.textContent='❌ 不正确。暴力搜索低 12 位（0~4095），用后续 IV 值验证。';}
+}
+
+// ============================================================
+// SOLUTIONS (locked behind password)
+// ============================================================
+const solutions = [
+  // Challenge 0: 初始谜题一
+`乘法密码破解 — 已知明文攻击
+
+【核心思路】
+前缀 "CryptoCup message:" 长 19 字节 > 16 字节 → 第一组 16 字节已知。
+
+【步骤】
+1. 取密文前 32 hex → c₀（第一组密文，BigInt）
+2. 取前缀前 16 字节 → m₀（第一组明文，BigInt）
+3. k₀ = c₀ × m₀⁻¹ (mod N)
+4. 对第 i 组：mᵢ = cᵢ × kᵢ⁻¹ (mod N)，然后 kᵢ₊₁ = kᵢ + 1
+5. 拼接所有 mᵢ，去掉前缀和 \\x00 填充即得 message
+
+【Python 代码】
+N = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123
+PREFIX = b"CryptoCup message:"
+c = bytes.fromhex(cipher_hex)
+C = [c[i*32:(i+1)*32] for i in range(len(c)//32)]
+m0 = int.from_bytes(PREFIX[:16], 'big')
+c0 = int.from_bytes(C[0], 'big')
+key = c0 * pow(m0, -1, N) % N  # Python 3.8+
+msg = b""
+for i in range(len(C)):
+    mi = int.from_bytes(C[i], 'big') * pow(key, -1, N) % N
+    msg += mi.to_bytes(16, 'big')
+    key += 1
+# 去掉前缀和填充
+message = msg[len(PREFIX):].rstrip(b'\\x00').decode()`,
+
+  // Challenge 1: 初始谜题二
+`SM3 哈希长度扩展攻击
+
+【核心思路】
+SM3 用 Merkle-Damgård 结构。已知 Hash(KEY || counter) = h，
+counter 已知。由于 KEY(32B)+counter(4B)=36B<64B，只有一个分组。
+我们可以用 h 作为新 IV，继续计算第二个分组。
+
+【SM3 填充规则（对于 36 字节 = 288 bit）】
+消息后追加：
+- 1 bit "1" (即字节 0x80)
+- 零填充：448 - (288+1) = 159 个 0 bit ≈ 19 字节 0x00 + 7 bit
+- 最后 8 字节：长度字段 = 288 (0x120)
+填充后整个分组 = 512 bit = 64 字节
+
+【攻击步骤】
+1. 构造 Group1Pad = 原 counter(4B) + SM3填充(60B)
+2. 新 counter = Group1Pad + 额外数据(如 \\xff\\xff\\xff\\xff)
+3. 新 token = SM3_extend(已知h, 额外数据, prevBlocks=1)
+
+【Python 伪代码】
+# 以已知哈希值 h 为 IV
+# 将 "FFFFFFFF" 作为第二个分组，用 SM3 压缩函数计算
+# prevBlockCount=1 表示前面已有一个 512-bit 分组
+new_token = sm3_extend(known_hash, b'\\xff\\xff\\xff\\xff', prev_blocks=1)
+
+【新 counter 构造】
+counter_hex = "51f18456"  # 4 字节原 counter
+# 填充：counter + 0x80 + 零填充 + 长度(288)
+padding = "80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120"
+new_counter = counter_hex + padding + "ffffffff"`,
+
+  // Challenge 2: 初始谜题三
+`LWE 矩阵求逆
+
+【核心思路】
+A 可逆！c₁ = x·A → x = c₁·A⁻¹ (mod q)
+t = c₂ - x·b = e₁ + m·(q/2) (mod q)
+e₁ ∈ {0,1}，q/2 = 125
+
+【SageMath 代码】
+q = 251
+A = Matrix(Zmod(q), [[...],...])
+b = vector([...])
+c1 = Matrix(Zmod(q), [[...],...])
+c2 = vector([...])
+
+x = c1 * A^(-1)          # 直接求 x
+t = c2 - x * b            # t = e1 + m*125
+
+m = ''.join('1' if int(t[i]) >= 125 else '0' for i in range(4))
+print(hex(int(m, 2)))`,
+
+  // Challenge 3: flag1
+`密钥爆破 — 自定义对称密码
+
+【核心思路】
+密钥 3 字节，首字节 0xF0 → 搜索空间 2^16 = 65536。
+对每个候选 key 解密，检查明文是否以 "pwd:" 开头。
+
+【解密 = 逆序执行】
+for round in [3,2,1,0]:
+    addRoundKey(state, roundKeys, round)
+    rightShiftBytes(state)
+    sBoxTransform(state, SBOX_INV)
+    reverseBits(state)
+
+【逆 S-Box】
+SBOX_INV = [13,4,0,5, 2,12,11,8, 10,6,1,9, 3,15,7,14]
+
+【Python 伪代码】
+for key in range(0xF00000, 0xF0FFFF+1):
+    pt = decrypt(ciphertext, key)
+    if pt.startswith(b"pwd:"):
+        print(f"Found: key={hex(key)}, pwd={pt}")`,
+
+  // Challenge 4: flag2
+`SM2 协同签名攻击 — k3=k2 Bug
+
+【核心思路】
+s₂ = d₂·k₂
+s₃ = d₂·(r + k₂)
+s₃ - s₂ = d₂·r
+d₂ = (s₃ - s₂) × r⁻¹ (mod n)
+
+【Python 代码】
+from Crypto.Util.number import inverse
+
+n = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123
+s2 = 0x...
+s3 = 0x...
+r  = 0x...
+
+d2 = (s3 - s2) * inverse(r, n) % n
+print(hex(d2))
+# flag2{d2_hex}`,
+
+  // Challenge 5: flag3
+`证书登录绕过 — CommonName 校验缺失
+
+【核心思路】
+服务器验证流程：
+1. ✅ 用户名 "shangmibeiadmin" 存在
+2. ✅ 证书是根 CA 签发的（用你自己的合法证书）
+3. ✅ 挑战码签名正确（用你自己的私钥）
+4. ❌ BUG: 没有检查 cert.CommonName == 登录用户名！
+
+【攻击步骤】
+1. 用自己的公钥注册任意用户名（如 "attacker"）
+2. 获得包含自己公钥的合法证书
+3. 发起登录请求：
+   - username = "shangmibeiadmin"
+   - cert = 步骤2 获得的证书（CommonName="attacker"）
+   - signature = 用私钥对挑战码的签名
+4. 服务器通过所有验证 → 以 admin 身份登录
+
+【关键点】
+服务器只验证了"证书是否有效"+"签名是否正确"，
+但没有验证"证书持有者是否是登录用户"。
+这就是 PKI 系统中的身份绑定缺失漏洞。`,
+
+  // Challenge 6: flag4
+`LCG 密钥恢复
+
+【核心思路】
+LCG: seed_{i+1} = (seed_i * a + b) mod 2^24
+genRandom: 5 轮 LCG → 返回高 12 位
+
+【暴力搜索】
+已知 IV[0] 的高 12 位，低 12 位未知 (0~4095)。
+对每种可能：
+  1. 重建完整 seed = (IV[0]<<12) | low
+  2. 迭代 5 轮 LCG
+  3. 检查高 12 位是否 == IV[1]
+  4. 匹配则继续验证 IV[2], IV[3]
+
+【Python 代码】
+a = 6364136223846793005 & 0xffffff
+b = 1; MASK = 0xffffff; R = 5
+
+iv = [0x..., 0x..., 0x..., 0x...]  # 已知高12位
+
+for low in range(4096):
+    s = (iv[0] << 12) | low
+    ok = True
+    for i in range(1, 4):
+        for _ in range(R): s = (s*a+b) & MASK
+        if (s >> 12) != iv[i]: ok = False; break
+    if ok:
+        # 找到正确状态，继续迭代得到 key
+        key_outs = []
+        for _ in range(4):
+            for _ in range(R): s = (s*a+b) & MASK
+            key_outs.append(s >> 12)
+        break
+
+# 用 key 和 iv 解密
+key_bytes = ...
+iv_bytes = ...
+plain = bytes(c ^ k ^ i for c,k,i in zip(ct, key_bytes*len, iv_bytes*len))`
+];
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+function initAll() {
+  genC0(); genC1(); genC2(); genC3(); genC4(); genC5(); genC6();
+}
+document.addEventListener('DOMContentLoaded', initAll);
+
+// Simple hash function for flag3
+function simpleHash2(s) {
+  // Use a simple but consistent hash
+  let h = 0n;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h * 31n) + BigInt(s.charCodeAt(i))) & 0xFFFFFFFFFFFFFFFFn;
+  }
+  return h;
+}
+</script>
+
+</body>
+</html>

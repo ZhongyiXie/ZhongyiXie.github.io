@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIST IR 8547 ipd — 向后量子密码标准的过渡（中文译本）</title>
+<style>
+  :root {
+    --bg: #f8f9fa; --text: #212529; --text2: #495057; --border: #dee2e6;
+    --accent: #1a56db; --surface: #fff; --warn: #e6a817; --danger: #d32f2f;
+    --success: #2e7d32;
+  }
+  body {
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", Georgia, serif;
+    max-width: 900px; margin: 0 auto; padding: 40px 24px; line-height: 1.9; color: var(--text); background: var(--bg);
+  }
+  h1 { font-size: 1.6em; text-align: center; margin: 24px 0 8px; color: #000; }
+  h2 { font-size: 1.25em; color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 6px; margin: 40px 0 16px; }
+  h3 { font-size: 1.08em; color: #000; margin: 28px 0 10px; }
+  h4 { font-size: 1em; color: var(--text); margin: 20px 0 8px; }
+  p { margin: 10px 0; text-indent: 2em; }
+  p.noindent { text-indent: 0; }
+
+  .cover { text-align: center; margin: 40px 0 60px; }
+  .cover h1 { font-size: 1.8em; border: none; margin-bottom: 4px; }
+  .cover .subtitle { font-size: 1.1em; color: var(--text2); margin: 6px 0; }
+  .cover .meta { font-size: 0.9em; color: var(--text2); margin: 4px 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.92em; }
+  th { background: #e9ecef; color: #000; text-align: left; padding: 8px 12px; border: 1px solid var(--border); font-weight: 700; }
+  td { padding: 8px 12px; border: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px 28px; margin: 24px 0; }
+  .toc ol { margin: 8px 0 0 20px; }
+  .toc li { margin: 3px 0; }
+
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; margin: 16px 0; }
+  .box.notice { border-left: 4px solid var(--accent); }
+  .box.warn { border-left: 4px solid var(--warn); }
+
+  blockquote { border-left: 3px solid var(--accent); padding: 6px 16px; margin: 14px 0; background: rgba(26,86,219,0.03); font-style: italic; }
+  blockquote.en { font-style: normal; color: var(--text2); font-size: 0.88em; border-left-color: #adb5bd; }
+
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78em; margin: 0 2px; font-family: system-ui, sans-serif; }
+  .tag-green { background: #e8f5e9; color: var(--success); }
+  .tag-yellow { background: #fff8e1; color: #b8860b; }
+  .tag-red { background: #ffebee; color: var(--danger); }
+
+  .page-break { border: none; border-top: 1px dashed #ccc; margin: 30px 0; }
+
+  .section-ref { font-weight: 700; color: var(--accent); }
+  .glossary dt { font-weight: 700; margin-top: 12px; }
+  .glossary dd { margin-left: 20px; color: var(--text2); }
+
+  #toc a { color: var(--text); text-decoration: none; }
+  #toc a:hover { color: var(--accent); }
+
+  sup { font-size: 0.8em; }
+  .footnote { font-size: 0.85em; color: var(--text2); }
+  .disclaimer { font-size: 0.85em; color: var(--text2); margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<!-- ====== 封面 ====== -->
+<div class="cover">
+  <p class="noindent" style="color:var(--text2);font-size:0.9em">NIST 内部报告 &nbsp; NIST IR 8547 ipd</p>
+  <h1>向后量子密码标准的过渡</h1>
+  <p class="subtitle"><em>Transition to Post-Quantum Cryptography Standards</em></p>
+  <p class="meta">初始公开草案 (Initial Public Draft)</p>
+  <p class="meta" style="margin-top:20px">
+    Dustin Moody · Ray Perlner · Andrew Regenscheid · Angela Robinson · David Cooper<br>
+    计算机安全部 · 信息技术实验室<br>
+    2024 年 11 月
+  </p>
+  <p class="meta" style="margin-top:10px;font-size:0.85em">
+    美国商务部 · Gina M. Raimondo，部长<br>
+    国家标准与技术研究院 · Laurie E. Locascio，院长兼商务部标准与技术副部长
+  </p>
+  <p class="meta" style="margin-top:10px">
+    原文获取：<a href="https://doi.org/10.6028/NIST.IR.8547.ipd">https://doi.org/10.6028/NIST.IR.8547.ipd</a>
+  </p>
+  <p class="meta" style="margin-top:10px;color:var(--danger)">
+    中文译本 · 仅供参考 · 以英文原文为准
+  </p>
+</div>
+
+<!-- ====== 文档信息 ====== -->
+<div class="box notice">
+  <p class="noindent" style="margin:0"><strong>关于本译本</strong></p>
+  <p class="noindent disclaimer" style="margin:4px 0 0 0">
+    本文件为 NIST IR 8547 ipd (2024年11月) 的中文译本。译文力求严谨准确，但以英文原文为最终依据。
+    原文中引用的 FIPS、SP 编号及外部参考文献以原样保留，便于追溯。
+    关键术语的翻译在首次出现时附注英文原文。
+    公众评议期：2024年11月12日至2025年1月10日。评议邮箱：pqc-transition@nist.gov。
+  </p>
+</div>
+
+<!-- ====== 术语对照表 ====== -->
+<div class="box">
+  <p class="noindent" style="margin:0"><strong>核心术语译法对照</strong></p>
+  <table style="margin:8px 0 0 0; font-size:0.88em">
+    <tr><th style="width:40%">英文</th><th style="width:30%">中译</th><th>说明</th></tr>
+    <tr><td>Post-Quantum Cryptography (PQC)</td><td>后量子密码</td><td>能够抵御量子计算机攻击的密码体制</td></tr>
+    <tr><td>Cryptographically Relevant Quantum Computer (CRQC)</td><td>密码学相关量子计算机</td><td>具备破解实际密码系统能力的量子计算机</td></tr>
+    <tr><td>Key-Encapsulation Mechanism (KEM)</td><td>密钥封装机制</td><td>一种特殊的密钥协商方案</td></tr>
+    <tr><td>"Harvest Now, Decrypt Later" (HNDL)</td><td>"先窃取，后解密"</td><td>攻击者现在截获密文，待量子计算机可用后再解密的威胁模型</td></tr>
+    <tr><td>Deprecated</td><td>已弃用（或仍可使用但存在安全风险）</td><td>表明算法可以继续使用，但使用者须接受一定的安全风险</td></tr>
+    <tr><td>Disallowed</td><td>禁止使用</td><td>算法不再被允许用于所述目的</td></tr>
+    <tr><td>Legacy Use</td><td>遗留使用</td><td>仅可用于处理已受保护的信息</td></tr>
+    <tr><td>Hybrid Mode / Hybrid Solution</td><td>混合模式 / 混合方案</td><td>同时使用经典算法与PQC算法</td></tr>
+    <tr><td>Crypto-Agility</td><td>密码敏捷性</td><td>系统在不做大改动的前提下替换密码算法的能力</td></tr>
+    <tr><td>Security Strength</td><td>安全强度</td><td>以比特数度量的密码算法抗攻击能力</td></tr>
+    <tr><td>Security Category</td><td>安全等级</td><td>NIST 为 PQC 算法定义的 1–5 级分类</td></tr>
+    <tr><td>Forward Secrecy</td><td>前向安全性</td><td>长期密钥泄露不影响历史会话安全</td></tr>
+    <tr><td>Non-Repudiation</td><td>不可否认性</td><td>签名者无法事后否认曾签署某消息</td></tr>
+  </table>
+</div>
+
+<!-- ====== 摘要 ====== -->
+<h2>摘要 (Abstract)</h2>
+<p>
+本报告阐述了 NIST 从量子脆弱密码算法向后量子数字签名算法和密钥协商方案过渡的预期方法。
+报告识别了现有量子脆弱的密码标准，以及信息技术产品和服务需要过渡到的抗量子标准。
+本报告旨在促进行业、标准组织和相关机构的参与，以推动和加速后量子密码的采用。
+</p>
+<blockquote class="en">
+This report describes NIST's expected approach to transitioning from quantum-vulnerable cryptographic algorithms to post-quantum digital signature algorithms and key-establishment schemes. It identifies existing quantum-vulnerable cryptographic standards and the quantum-resistant standards to which information technology products and services will need to transition.
+</blockquote>
+
+<p><strong>关键词 (Keywords)</strong>：密码学；后量子密码学；公钥密码学；量子计算。</p>
+
+<hr class="page-break">
+
+<!-- ====== 目录 ====== -->
+<div class="toc" id="toc">
+  <p class="noindent" style="margin:0"><strong>目录 (Table of Contents)</strong></p>
+  <ol>
+    <li><a href="#s1">引言 (Introduction)</a>
+      <ol style="list-style-type:none;padding-left:18px">
+        <li>1.1. 范围与目的 (Scope and Purpose)</li>
+        <li>1.2. 受众 (Audience)</li>
+      </ol>
+    </li>
+    <li><a href="#s2">背景 (Background)</a>
+      <ol style="list-style-type:none;padding-left:18px">
+        <li>2.1. 密码标准 — 2.1.1. 数字签名算法 &nbsp; 2.1.2. 密钥协商 &nbsp; 2.1.3. 对称密码</li>
+        <li>2.2. 密码技术与组件 — 2.2.1. 网络协议与安全技术标准 &nbsp; 2.2.2. 软件密码库 &nbsp; 2.2.3. 密码硬件 &nbsp; 2.2.4. PKI 与其他基础设施组件 &nbsp; 2.2.5. IT 应用与服务</li>
+      </ol>
+    </li>
+    <li><a href="#s3">迁移考量 (Migration Considerations)</a>
+      <ol style="list-style-type:none;padding-left:18px">
+        <li>3.1. 用例 — 3.1.1. 代码签名 &nbsp; 3.1.2. 用户与机器认证 &nbsp; 3.1.3. 网络安全协议 &nbsp; 3.1.4. 电子邮件与文档签名/加密</li>
+        <li>3.2. PQC-经典混合协议 — 3.2.1. 混合密钥协商技术 &nbsp; 3.2.2. 混合数字签名技术</li>
+      </ol>
+    </li>
+    <li><a href="#s4">PQC 标准过渡时间表 (Transition Timeline)</a>
+      <ol style="list-style-type:none;padding-left:18px">
+        <li>4.1. NIST 密码算法标准与指南 — 4.1.1. 数字签名 &nbsp; 4.1.2. 密钥协商 &nbsp; 4.1.3. 对称密码</li>
+        <li>4.2. 应用特定标准与指南</li>
+      </ol>
+    </li>
+    <li><a href="#refs">参考文献 (References)</a></li>
+    <li><a href="#glossary">附录A：术语表 (Glossary)</a></li>
+  </ol>
+</div>
+
+<!-- ====== 相关表格列表 ====== -->
+<h3>表格目录 (List of Tables)</h3>
+<table>
+  <tr><td>表 1</td><td>后量子安全等级 (Post-Quantum Security Categories)</td></tr>
+  <tr><td>表 2</td><td>量子脆弱的数字签名算法</td></tr>
+  <tr><td>表 3</td><td>后量子数字签名算法</td></tr>
+  <tr><td>表 4</td><td>量子脆弱的密钥协商方案</td></tr>
+  <tr><td>表 5</td><td>后量子密钥协商方案</td></tr>
+  <tr><td>表 6</td><td>分组密码 (Block Ciphers)</td></tr>
+  <tr><td>表 7</td><td>哈希函数与可扩展输出函数 (XOFs)</td></tr>
+</table>
+
+<hr class="page-break">
+
+<!-- ====== 第1章 引言 ====== -->
+<h2 id="s1">1. 引言 (Introduction)</h2>
+
+<p>
+密码算法对于保护电子机密信息免受非授权访问至关重要。数十年来，这些算法已证明它们足够强大，能够抵御试图攻破密码学的传统计算机攻击。
+然而，未来的量子计算可能能够破解这些算法，从而使数据和信息面临风险。
+对抗未来的量子能力需要新的密码方法，这些方法既能抵御当前传统计算机的攻击，也能抵御未来量子计算机的攻击——这些方法被称为<strong>后量子密码学 (PQC)</strong>。
+</p>
+
+<p>
+为此，NIST 已发布三项 PQC 标准，开启后量子密码过渡的下一个重要阶段：
+基于模格的密钥封装机制标准 [FIPS203]、
+基于模格的数字签名算法标准 [FIPS204]、
+以及无状态哈希基签名算法标准 [FIPS205]。
+纵观历史，从算法标准化到完全集成到信息系统中的过程可能需要 <strong>10 到 20 年</strong>。
+这一时间线反映了企业将算法构建到产品和服务中、采购这些产品和服务、以及将这些产品和服务集成到技术基础设施中的复杂性。
+</p>
+
+<p>
+尽管向后量子密码的过渡在密码学相关量子计算机 (CRQC) 被建造出来之前就已经开始，但威胁已经迫在眉睫。
+加密数据仍然面临风险，因为存在<strong>"先窃取，后解密" (Harvest Now, Decrypt Later)</strong> 威胁——攻击者现在收集加密数据，目的是等到量子技术成熟后将其解密。
+由于敏感数据往往在多年后仍具有价值，现在就开始向后量子密码过渡对于防止这些未来的数据泄露至关重要。
+这一威胁模型是后量子密码过渡之所以紧急的主要原因之一。
+</p>
+
+<h3>1.1. 范围与目的 (Scope and Purpose)</h3>
+
+<p>
+密码技术的更新在历史上以不同规模发生过多次，例如增加密钥长度，或淘汰不安全的哈希函数和分组密码。
+虽然 PQC 过渡在规模上是前所未有的，但它受益于以往密码变更所不具备的意识水平和理解程度。
+NIST 认识到迁移当前依赖公钥密码学的庞大系统体系的复杂性，并承认这一过渡需要在具有特定要求和约束的多样化应用和基础设施上进行大量努力。
+</p>
+
+<p>
+本报告是管理和引导后量子密码过渡的更广泛战略的<strong>初步步骤</strong>。
+这一过渡将涉及新 PQC 算法的采用，以及当前广泛存在于技术基础设施中的量子脆弱算法的谨慎弃用 (Deprecation)、受控的遗留使用 (Legacy Use) 和最终移除 (Removal)。
+公私合作对于 PQC 之路至关重要。此外，本报告延续了 NIST 与行业、标准组织和相关机构的持续对话，以制定清晰的路线图和现实的时间表。
+NIST 致力于确保这一过渡尽可能平稳和协调，在采用 PQC 的紧迫性与尽量减少对关键系统的干扰之间取得平衡。
+</p>
+
+<h3>1.2. 受众 (Audience)</h3>
+
+<p>
+本文件面向广泛的受众，包括联邦机构、技术提供商、标准组织和密码模块验证计划 (CMVP) 实验室。
+这些团体在准备 PQC 迁移中发挥着关键作用——开发、实施和标准化在量子计算时代保护信息所需的新密码方法。
+本文件应为这些利益相关者在将信息技术产品、服务和基础设施迁移至 PQC 方面的努力和时间表提供参考。
+</p>
+
+<hr class="page-break">
+
+<!-- ====== 第2章 背景 ====== -->
+<h2 id="s2">2. 背景 (Background)</h2>
+
+<h3>2.1. 密码标准 (Cryptographic Standards)</h3>
+
+<p>
+联邦信息处理标准 (FIPS) 和 NIST SP 800 系列特刊规定了一套广泛的密码原语、算法和方案，包括许多在 PQC 过渡中将被弃用并最终被禁止使用的公钥密码系统。
+本节识别 NIST 现有密码标准中的量子脆弱算法，以及最近发布的抗量子算法标准。
+第 4.1 节提供了这些标准中量子脆弱算法的过渡计划。
+</p>
+
+<h4>2.1.1. 数字签名算法 (Digital Signature Algorithms)</h4>
+
+<p>
+数字签名算法用于提供身份认证、完整性认证、来源认证以及对不可否认性的支持。
+数字签名算法与哈希函数或可扩展输出函数 (XOF) 结合使用，以对任意长度的消息进行签名。
+</p>
+
+<p>
+NIST 批准的数字签名算法历史上在 FIPS 186 [FIPS186] 中规定。
+当前版本的 FIPS 186 规定了椭圆曲线数字签名算法 (ECDSA)，并采纳了 RFC 8017 和 PKCS 1（1.5 版及更高版本）中规定的 RSA 算法，以及 RFC 8032 中规定的 Edwards 曲线数字签名算法 (EdDSA)。
+相关的 SP 800-186 [SP800186] 规定了与 ECDSA 一起使用的椭圆曲线，以及 SP 800-56A [SP80056A] 中基于椭圆曲线密码 (ECC) 的密钥协商方案。
+<strong>这些算法在面对密码学相关量子计算机上的 Shor 算法时都是脆弱的。</strong>
+</p>
+
+<p>
+FIPS 204 和 FIPS 205 各规定了一种抗量子数字签名方案：
+</p>
+<ul>
+  <li><strong>FIPS 204</strong> 规定了基于模格的数字签名算法 (ML-DSA) [FIPS204]，源自 CRYSTALS-Dilithium 提交方案。</li>
+  <li><strong>FIPS 205</strong> 规定了无状态哈希基数字签名算法 (SLH-DSA)，源自 SPHINCS+ 提交方案 [FIPS205]。</li>
+</ul>
+
+<p>
+SP 800-208《有状态哈希基签名方案建议》规定了两种有状态哈希基签名 (HBS) 方案——Leighton-Micali 签名 (LMS) 系统和扩展 Merkle 签名方案 (XMSS)——以及它们的多树变体：分层签名系统 (HSS) 和多树 XMSS (XMSS<sup>MT</sup>) [SP800208]。
+这些方案也能抵抗量子计算机的攻击。
+在有状态 HBS 方案中，私钥由大量一次性签名 (OTS) 私钥组成。这些方案的安全性依赖于签名者确保每个 OTS 密钥不会用于签署多于一条消息。
+由于需要维护状态，HBS 方案不适用于一般用途。
+</p>
+
+<p>
+未来，NIST 计划制定一项 FIPS，规定源自 FALCON 的数字签名算法，作为这些标准的附加替代方案。
+此外，NIST 正在通过"NIST 后量子密码标准化过程额外数字签名方案" [NISTIR8528] 评估其他提议的数字签名算法，以考虑可能的标准化。
+</p>
+
+<h4>2.1.2. 密钥协商 (Key Establishment)</h4>
+
+<p>
+密钥协商是指生成密钥并将其提供给被授权使用这些密钥的实体的方法。
+目前 NIST 批准的密钥协商方案规定在：
+</p>
+<ul>
+  <li>SP 800-56A《使用离散对数密码学的对等密钥协商方案建议》[SP80056A] — 基于有限域和椭圆曲线上的离散对数问题，包括 Diffie-Hellman 和 Menezes-Qu-Vanstone (MQV) 的几种变体。</li>
+  <li>SP 800-56B《使用整数分解密码学的对等密钥协商方案建议》[SP80056B] — 基于 RSA 公钥密码系统，包括密钥协商和密钥传输两种批准方法。</li>
+</ul>
+
+<p>
+FIPS 203 规定了一种称为基于模格的密钥封装机制 (ML-KEM) 的密码方案，源自 CRYSTALS-KYBER 提交方案。
+密钥封装机制 (KEM) 是一种特殊类型的密钥协商方案，可用于在两个通过公共信道通信的参与方之间建立共享秘密密钥。
+NIST PQC 标准化过程第四轮正在评估额外的 KEM 算法，NIST 预期未来将选择一种或多种 ML-KEM 的替代方案。
+</p>
+
+<h4>2.1.3. 对称密码 (Symmetric Cryptography)</h4>
+
+<p>
+对称密钥算法（有时称为秘密密钥算法）使用单个密钥来应用密码保护和移除或检查保护，即同一密钥用于密码操作及其逆操作。
+若干类对称密钥算法已获批准：基于分组密码算法的（如 AES）和基于哈希函数使用的（如基于哈希函数的带密钥消息认证码）。
+</p>
+<p>对称密钥算法用于：分组密码、哈希函数、使用分组密码操作模式的加密、使用分组密码操作模式的数据认证、使用哈希密钥构造的数据认证、密钥派生、密钥包装、随机比特生成。</p>
+
+<p>
+如第 4.1.3 节所述，现有的对称密码算法标准对量子计算机攻击的脆弱性较低。<strong>NIST 预计不需要将过渡离开这些标准作为 PQC 迁移的一部分。</strong>
+</p>
+
+<h3>2.2. 密码技术与组件 (Cryptographic Technologies and Components)</h3>
+
+<p>
+一旦 PQC 算法标准化，应用程序需要修改以使用它们。许多应用程序包含基于标准化协议和安全技术的组件，这些组件需要修订以支持 PQC 算法。
+此外，应用程序是建立在软件密码库之上的，这些库要么提供密码算法的实现，要么提供对硬件密码模块的接口。
+应用程序使用的任何软件密码库和硬件密码模块也需要修订以支持 PQC 算法。
+应用程序还可能依赖基础设施组件，如公钥基础设施 (PKI)，这些组件需要先于应用程序本身进行更新以支持 PQC 算法。
+</p>
+
+<h4>2.2.1. 网络协议与安全技术标准</h4>
+<p>
+网络协议和安全技术标准定义了数据在网络上的交换规则，确保安全可靠的通信。
+例如传输层安全 (TLS)、安全外壳 (SSH)、互联网协议安全 (IPsec) 和密码消息语法 (CMS)。
+更新这些协议以纳入 PQC 算法对于维护数据机密性和完整性至关重要。
+这涉及修订协议规范以支持新的抗量子密钥交换机制和认证方法。在某些情况下只需为新算法分配一个标识符，而在其他情况下需要更大的更改来适应 PQC 算法更大的尺寸或不同的接口。
+</p>
+
+<h4>2.2.2. 软件密码库</h4>
+<p>
+软件密码库是在软件层面实现的密码算法和协议的集合，为应用程序提供基本的密码功能。
+OpenSSL、BoringSSL、Libsodium 和 Java Cryptography Architecture (JCA) 是一些典型代表。
+这些库需要纳入 NIST 等机构标准化的 PQC 算法——添加新算法、为性能优化实现、并确保这些实现对侧信道攻击安全。
+</p>
+
+<h4>2.2.3. 密码硬件</h4>
+<p>
+密码硬件模块，如硬件安全模块 (HSM) 和可信平台模块 (TPM)，为执行密码操作和存储敏感密钥提供安全环境。
+硬件模块必须升级或重新设计以支持 PQC 算法——PQC 算法通常具有更大的密钥大小和不同的计算需求。
+这包括更新固件或硬件以处理新算法，确保模块能高效执行抗量子密码操作，同时保持这些设备预期的高安全标准。
+</p>
+
+<h4>2.2.4. PKI 与其他基础设施组件</h4>
+<p>
+公钥基础设施 (PKI) 系统管理数字证书和公私钥对，以实现网络上的安全通信和认证。其他基础设施组件包括证书颁发机构 (CA)、注册机构、密钥管理系统和目录服务。
+PKI 组件必须更新以颁发、分发和管理使用 PQC 算法的证书，并使用 PQC 算法签署证书和撤销状态信息。
+这包括在证书颁发过程中支持新的密码算法，以及修改验证和撤销机制。确保过渡期间的向后兼容性和互操作性对于维护整个网络的信任和安全至关重要。
+</p>
+
+<h4>2.2.5. IT 应用与服务</h4>
+<p>
+IT 应用和服务涵盖组织使用的各种软件和平台，包括 Web 应用、数据库、通信工具、云服务和企业软件。
+这些应用依赖密码学来保护数据、认证用户和确保安全交易。
+应用和服务必须修改以支持用于加密、数字签名和密钥交换的 PQC 算法。这需要更新底层密码实现、适应密钥大小和算法性能的变化，并确保与更新后的协议和库的兼容性。
+开发人员需要重构代码、进行广泛测试，并可能重新设计用户界面以适应这些变化。
+</p>
+
+<hr class="page-break">
+
+<!-- ====== 第3章 迁移考量 ====== -->
+<h2 id="s3">3. 迁移考量 (Migration Considerations)</h2>
+
+<p>
+尽管目前不存在威胁安全水平的密码学相关量子计算机，过渡到新的后量子算法仍将需要大量时间。
+以往的密码迁移已花费十年以上的时间，而这次更加复杂的迁移可能至少需要同样长的时间。
+</p>
+
+<p>
+<strong>Mosca 定理</strong>通过引入一个简洁而有力的时间线来强调向后量子算法迁移的紧迫性：
+设 <strong>X</strong> 表示数据必须保持安全的年数，<strong>Y</strong> 表示完成过渡所需的估计时间，则组织必须在 X + Y 超过密码学相关量子计算机预期建成的时间 Z 之前开始向后量子算法过渡。
+这意味着即使量子计算机还需十年才能问世，组织也必须<strong>从今天起开始向后量子密码迁移</strong>，以避免其加密数据在未来量子计算机可操作时遭到暴露。
+这一通常被称为"先窃取，后解密"的威胁，凸显了立即行动的必要性——尤其是对于具有长期敏感性的数据，如政府机密或医疗记录。
+</p>
+
+<h3>3.1. 用例 (Use Cases)</h3>
+
+<h4>3.1.1. 代码签名 (Code Signing)</h4>
+<p>
+代码签名涉及对可执行文件和软件包进行数字签名，以验证作者身份并确保代码未被篡改。
+安装和执行代码的设备需要能够验证代码上的签名。在某些情况下，在设备制造后更新执行签名验证的代码是不可行的。
+此时，如果存在设备在 CRQC 出现后仍将使用的风险，则设备在设计上必须要求对可执行文件使用抗量子签名。
+</p>
+
+<h4>3.1.2. 用户与机器认证 (User and Machine Authentication)</h4>
+<p>
+用户和机器认证系统验证身份以控制对资源的访问。
+不同于加密面临的 HNDL 威胁——只要执行认证时所使用的密码算法和密钥在认证时是安全的，认证系统就保持安全。
+认证系统可以继续使用量子脆弱算法，直到能够破解这些算法的量子计算机出现——届时使用这些算法的认证将需要被禁用。
+支持抗量子认证算法需要升级执行和接受认证的系统以及任何支持性基础设施（如 PKI），可能还需要获取支持抗量子算法的硬件密码令牌。
+</p>
+
+<h4>3.1.3. 网络安全协议 (Network Security Protocols)</h4>
+<p>
+TLS 和 VPN 等网络安全协议保护数据在公共网络上的传输。现代网络安全协议倾向于使用独立的非对称密钥分别用于密钥协商和认证。
+长期密钥用于认证，而密钥协商密钥使用短时间（通常仅用于一次密钥协商），这提供了<strong>前向安全性 (Forward Secrecy)</strong>——长期密钥的泄露不会导致在其泄露之前发生的通信会话的泄露。
+由于通过密钥协商过程建立的对称密钥用于提供机密性，在确定密钥协商方案的迁移时间线时需要考虑 HNDL 威胁。用于认证的密码算法可以在不同的时间点过渡。
+</p>
+
+<h4>3.1.4. 电子邮件与文档签名/加密</h4>
+<p>
+S/MIME 是用于 MIME 数据公钥加密和签名的标准。它为电子邮件和文件交换提供端到端的加密和认证。
+与提供数据机密性的其他应用一样，电子邮件加密同样受到 HNDL 威胁的影响。
+</p>
+
+<h3>3.2. PQC-经典混合协议 (PQC-Classical Hybrid Protocols)</h3>
+
+<p>
+向后量子密码的迁移初期可能包括<strong>混合方案</strong>——在建立密码密钥或生成数字签名时同时使用抗量子算法和量子脆弱算法。
+这些混合方案通常被设计为只要至少一个组成算法是安全的，整体就保持安全。
+</p>
+
+<p>
+混合方案常被用作对底层组成算法中密码或实现缺陷的对冲，也可能在特定行业要求仍需要传统量子脆弱算法时提供使用 PQC 的路径。
+然而，混合方案增加了实现和架构的复杂性，可能在 PQC 过渡期间增加安全风险和成本。
+使用混合方案时，通常期望将其视为临时措施，通向使用仅 PQC 算法的第二阶段过渡。
+</p>
+
+<p>
+<strong>无论是否使用混合方案</strong>，在 PQC 过渡期间，量子脆弱和抗量子密码算法将在许多应用和系统中并行部署和使用，以促进互操作性。
+例如，许多网络安全协议支持多组密码算法的使用，并允许通信双方在每个会话中协商使用哪种算法。
+类似地，在 PQC 过渡期间，使用量子脆弱数字签名算法的 PKI 预期将与使用抗量子算法的 PKI 同时部署和使用。
+如果每个会话仅使用单一密码算法进行密钥协商和/或数字签名，则此类方式不被视为混合方案。
+</p>
+
+<h4>3.2.1. 混合密钥协商技术</h4>
+
+<p>
+混合密钥协商模式在此定义为一种密钥协商方案，它是两个或多个本身即为密码密钥协商方案的组件的组合。
+NIST 目前在 SP 800-56C 中允许一种通用复合密钥协商技术：设 Z 是按 SP 800-56A 或 800-56B 生成的共享秘密，T 是通过其他方案生成或分发的共享秘密，则 Z' = Z || T 可被视为共享秘密，SP 800-56C 中的任何密钥派生方法可应用于 Z' 以派生秘密密钥材料。
+</p>
+
+<p>
+NIST 拟更新 SP 800-56C，使 Z 可按任何当前和未来的 NIST 密钥协商标准生成，包括 SP 800-56A、SP 800-56B、FIPS 203 以及任何额外的后量子密钥协商标准。
+混合技术的期望属性是，只要至少一个组成方案安全，派生的密钥就保持安全。
+NIST 计划在即将发布的 SP 800-227《密钥封装机制建议》中提供关于各种密钥合并器的指导。
+此外，FIPS 203 的输出本身就是不需要进一步密钥派生的共享秘密密钥，可以直接用作 SP 800-56C 通用复合模式中的 Z 值。
+</p>
+
+<h4>3.2.2. 混合数字签名技术</h4>
+
+<p>
+混合数字签名的常见技术涉及使用<strong>双重签名 (Dual Signatures)</strong>，由同一消息上的两个或多个签名组成。
+双重签名的验证要求所有组成签名均成功验证。
+NIST 现有的标准和指南允许其使用，前提是至少一个组成数字签名算法是 NIST 批准的。
+NIST 将每个特定应用是否能承受混合模式的实现成本、性能降低和工程复杂性（包括适当且独立的安全审查）的决定留给各应用方自行判断。
+为协助希望采用此类机制的外部各方，NIST 将在 FIPS 140 验证中允许混合密钥协商模式和双重签名的使用——前提是适当地与 NIST 批准的方案结合。
+</p>
+
+<hr class="page-break">
+
+<!-- ====== 第4章 时间表 ====== -->
+<h2 id="s4">4. PQC 标准过渡时间表 (Towards a PQC Standards Transition Timeline)</h2>
+
+<p>
+NIST 的密码标准为联邦和非联邦系统中保护敏感信息所必需的广泛密码机制提供了全面指导。
+这些标准涵盖了确保数据机密性、完整性和真实性的基本领域，如加密算法、数字签名、哈希函数、密钥协商和随机数生成。
+此外，NIST 标准定义了密钥管理实践，并提供了安全生成、存储、分发和销毁密码密钥的框架。
+在单个算法之外，NIST 标准还提供了对保护通信的密码协议（如保护互联网数据交换的 TLS 协议）的指导。
+它们还通过 CMVP 规定了密码模块的要求，以确保实现满足严格的安全标准。
+NIST 也开发了 PQC 标准，以保护系统免受未来量子攻击。
+通过工业界、学术界和其他利益相关者的合作，NIST 持续更新其密码标准以应对不断演变的安全威胁和技术进步。
+</p>
+
+<div class="box notice">
+  <p class="noindent" style="margin:0"><strong>国家安全备忘录第10号 (NSM-10)</strong> 将 <strong>2035 年</strong>确立为完成联邦系统 PQC 迁移的主要目标年：</p>
+  <blockquote style="margin:10px 0 0 0">
+    "任何使用现有公钥密码公共标准的数字系统，或计划过渡到此类密码学的数字系统，都可能容易受到密码学相关量子计算机 (CRQC) 的攻击。
+    为减轻这一风险，美国必须优先将密码系统及时、公平地过渡到抗量子密码学，目标是在 2035 年之前尽可能多地减轻量子风险。"
+  </blockquote>
+</div>
+
+<p>
+这一日期反映了过渡到能够抵御未来量子威胁的密码方法的紧迫性。
+然而，重要的是认识到迁移时间线可能因特定用例或应用而异。
+一些系统——特别是具有长期机密性需求或更复杂密码基础设施的系统——可能需要更早的过渡，而其他系统可能由于遗留约束或较低的风险特征而以较慢的节奏采用 PQC。
+迁移规划的灵活性对于平衡保护关键系统的紧迫性与不同行业在这一过渡期间面临的实际挑战至关重要。
+NIST 将努力确保这些不同的时间表得到承认和支持，同时维持在 2035 年前实现广泛采用 PQC 的总体目标。
+</p>
+
+<h3>4.1. NIST 密码算法标准与指南</h3>
+
+<p>
+SP 800-131A [SP800131A] 描述了联邦政府机构为保护受控非密信息而使用密码学的相关过渡。
+在向后量子密码过渡的过程中，NIST 将修订 SP 800-131A，提供更详细的指南和时间表。
+</p>
+
+<p>
+SP 800-131A 中使用了以下术语来指示算法的批准状态：
+</p>
+
+<div class="box">
+  <table style="margin:0">
+    <tr><th style="width:18%">状态</th><th style="width:18%">英文</th><th>定义</th></tr>
+    <tr>
+      <td><span class="tag tag-green">可接受</span></td>
+      <td>Acceptable</td>
+      <td>FIPS 或 SP 中的算法和密钥长度/强度按照相关指南被批准使用。</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-yellow">已弃用</span></td>
+      <td>Deprecated</td>
+      <td>算法和密钥长度/强度<strong>可以使用，但存在一定安全风险</strong>。数据所有者必须审查此风险潜力，并决定是否继续使用已弃用的算法或密钥长度。</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">禁止使用</span></td>
+      <td>Disallowed</td>
+      <td>算法、密钥长度/强度、参数集或方案<strong>不再被允许</strong>用于所述目的。</td>
+    </tr>
+    <tr>
+      <td>遗留使用</td>
+      <td>Legacy Use</td>
+      <td>算法、方案或参数集<strong>仅可用于处理已受保护的信息</strong>（例如，解密密文数据或验证数字签名）。</td>
+    </tr>
+  </table>
+</div>
+
+<p>
+过渡时间表主要由给定算法及其相关参数集可提供的密码保护级别驱动，历史上以<strong>安全强度 (Security Strength)</strong> 描述——如果破解算法需要 2<sup>s</sup> 次某种操作，则该算法具有 s 比特的安全强度，其中 s = 112、128、192 或 256。
+然而，由于准确预测未来量子计算机的性能特征（如成本、速度和内存大小）存在巨大困难，估计后量子密码系统的安全强度存在显著不确定性。
+</p>
+
+<p>
+虽然 NIST 指南继续使用比特长度安全强度来描述算法和参数集抵御传统计算机攻击的保护水平，但<strong>抗量子安全性以一套广泛的安全等级 (Security Categories) 来描述</strong>。
+每个等级由一个相对易于分析的参考原语定义，其安全性作为对被认为与实际安全相关的各种度量标准的下限。
+NIST 基于现有对称密码标准提供的安全强度范围进行了分类。
+</p>
+
+<h4>表 1：后量子安全等级 (Post-Quantum Security Categories)</h4>
+<table>
+  <tr><th>安全等级</th><th>攻击类型</th><th>示例</th></tr>
+  <tr><td>1</td><td>对 128 比特密钥分组密码的密钥搜索</td><td>AES-128</td></tr>
+  <tr><td>2</td><td>对 256 比特哈希函数的碰撞搜索</td><td>SHA-256</td></tr>
+  <tr><td>3</td><td>对 192 比特密钥分组密码的密钥搜索</td><td>AES-192</td></tr>
+  <tr><td>4</td><td>对 384 比特哈希函数的碰撞搜索</td><td>SHA3-384</td></tr>
+  <tr><td>5</td><td>对 256 比特密钥分组密码的密钥搜索</td><td>AES-256</td></tr>
+</table>
+
+<!-- ====== 4.1.1 数字签名 ====== -->
+<h4>4.1.1. 数字签名 (Digital Signatures)</h4>
+
+<h4>表 2：量子脆弱的数字签名算法</h4>
+<table>
+  <tr><th>算法族</th><th>参数</th><th>过渡安排</th></tr>
+  <tr>
+    <td>ECDSA [FIPS186]</td>
+    <td>112 比特安全强度</td>
+    <td><strong>2030 年后弃用</strong> / 2035 年后禁止使用</td>
+  </tr>
+  <tr><td>ECDSA</td><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+  <tr>
+    <td>EdDSA [FIPS186]</td>
+    <td>≥ 128 比特安全强度</td>
+    <td><strong>2035 年后禁止使用</strong></td>
+  </tr>
+  <tr>
+    <td>RSA [FIPS186]</td>
+    <td>112 比特安全强度</td>
+    <td><strong>2030 年后弃用</strong> / 2035 年后禁止使用</td>
+  </tr>
+  <tr><td>RSA</td><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+</table>
+
+<p>
+NIST 的长期密码算法过渡计划在 SP 800-57 第一部分 [SP80057] 中概述。这些指南曾预测 NIST 将在 2031 年 1 月 1 日禁止使用提供 112 比特安全性强度的公钥方案。
+然而，基于在此时间框架内需要迁移到抗量子算法，NIST 改为将 112 比特安全性强度级别的经典数字签名<strong>弃用 (Deprecate)</strong> 而非直接禁止。
+组织可以在迁移到表 3 所列后量子签名的过程中继续使用这些算法和参数集。
+</p>
+
+<h4>表 3：后量子数字签名算法</h4>
+<table>
+  <tr><th>算法族</th><th>参数集</th><th>安全强度</th><th>安全等级</th></tr>
+  <tr><td rowspan="3"><strong>ML-DSA</strong> [FIPS204]</td><td>ML-DSA-44</td><td>128 比特</td><td>2</td></tr>
+  <tr><td>ML-DSA-65</td><td>192 比特</td><td>3</td></tr>
+  <tr><td>ML-DSA-87</td><td>256 比特</td><td>5</td></tr>
+  <tr><td rowspan="4"><strong>SLH-DSA</strong> [FIPS205]</td><td>SLH-DSA-SHA2-128[s/f] / SLH-DSA-SHAKE-128[s/f]</td><td>128 比特</td><td>1</td></tr>
+  <tr><td>SLH-DSA-SHA2-192[s/f] / SLH-DSA-SHAKE-192[s/f]</td><td>192 比特</td><td>3</td></tr>
+  <tr><td>SLH-DSA-SHA2-256[s/f] / SLH-DSA-SHAKE-256[s/f]</td><td>256 比特</td><td>5</td></tr>
+  <tr><td>With SHA-256/192 / With SHAKE256/192</td><td>192 比特</td><td>3</td></tr>
+  <tr><td rowspan="2"><strong>LMS, HSS</strong> [SP800208]</td><td>With SHA-256 / With SHAKE256</td><td>256 比特</td><td>5</td></tr>
+  <tr><td>With SHA-256/192 / With SHAKE256/192</td><td>192 比特</td><td>3</td></tr>
+  <tr><td rowspan="2"><strong>XMSS, XMSS<sup>MT</sup></strong> [SP800208]</td><td>With SHA-256 / With SHAKE256</td><td>256 比特</td><td>5</td></tr>
+  <tr><td>With SHA-256/192 / With SHAKE256/192</td><td>192 比特</td><td>3</td></tr>
+</table>
+
+<!-- ====== 4.1.2 密钥协商 ====== -->
+<h4>4.1.2. 密钥协商 (Key Establishment)</h4>
+
+<h4>表 4：量子脆弱的密钥协商方案</h4>
+<table>
+  <tr><th>方案</th><th>参数</th><th>过渡安排</th></tr>
+  <tr>
+    <td rowspan="3"><strong>有限域 DH 和 MQV</strong> [SP80056A]</td>
+    <td>112 比特安全强度</td>
+    <td><strong>2030 年后弃用</strong> / 2035 年后禁止使用</td>
+  </tr>
+  <tr><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+  <tr><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+  <tr>
+    <td rowspan="3"><strong>椭圆曲线 DH 和 MQV</strong> [SP80056A]</td>
+    <td>112 比特安全强度</td>
+    <td><strong>2030 年后弃用</strong> / 2035 年后禁止使用</td>
+  </tr>
+  <tr><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+  <tr><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+  <tr>
+    <td rowspan="3"><strong>RSA</strong> [SP80056B]</td>
+    <td>112 比特安全强度</td>
+    <td><strong>2030 年后弃用</strong> / 2035 年后禁止使用</td>
+  </tr>
+  <tr><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+  <tr><td>≥ 128 比特安全强度</td><td><strong>2035 年后禁止使用</strong></td></tr>
+</table>
+
+<p>
+与数字签名算法的过渡类似，NIST 改为对 112 比特安全性强度级别的经典密钥协商方案进行<strong>弃用 (Deprecate)</strong> 而非完全禁止。
+组织可以在迁移到 ML-KEM 或其他已批准的量子抵抗技术的过程中继续使用这些算法和参数集。
+然而，<strong>为减轻网络通信中 HNDL 攻击的风险</strong>，第 4.2 节所述的特定应用指南可能要求或建议在经典方案总体上被禁止之前就迁移到抗量子密钥协商方案。
+</p>
+
+<h4>表 5：后量子密钥协商方案</h4>
+<table>
+  <tr><th>方案</th><th>参数集</th><th>安全强度</th><th>安全等级</th></tr>
+  <tr><td rowspan="3"><strong>ML-KEM</strong> [FIPS203]</td><td>ML-KEM-512</td><td>128 比特</td><td>1</td></tr>
+  <tr><td>ML-KEM-768</td><td>192 比特</td><td>3</td></tr>
+  <tr><td>ML-KEM-1024</td><td>256 比特</td><td>5</td></tr>
+</table>
+<p>
+目前，<strong>ML-KEM 是唯一已批准</strong>的基于公钥密码的后量子密钥协商方案。
+NIST PQC 标准化过程第四轮仍在评估额外算法，NIST 预期未来将选择一种或多种 ML-KEM 的替代方案。
+</p>
+
+<!-- ====== 4.1.3 对称密码 ====== -->
+<h4>4.1.3. 对称密码 (Symmetric Cryptography)</h4>
+
+<p>
+NIST 对称密码领域的现有标准——包括哈希函数、XOF、分组密码、KDF 和 DRBG——比 SP 800-56A、SP 800-56B 和 FIPS 186 中的公钥密码标准<strong>对已知量子攻击的脆弱性要低得多</strong>。
+特别是，所有提供至少 128 比特经典安全性的 NIST 批准的对称原语，据信至少满足 NIST PQC 标准化过程五级安全强度分类体系中的<strong>第 1 级</strong>要求。
+NIST 有少数 112 比特安全强度级别的对称密码标准，将在 2030 年被禁止使用，应用在过渡到 PQC 时应迁移离开这些标准。
+</p>
+
+<h4>表 6：分组密码 (Block Ciphers)</h4>
+<table>
+  <tr><th>分组密码</th><th>参数集</th><th>安全强度</th><th>安全等级</th></tr>
+  <tr><td rowspan="3">AES [FIPS197]</td><td>AES-128</td><td>128 比特</td><td>1</td></tr>
+  <tr><td>AES-192</td><td>192 比特</td><td>3</td></tr>
+  <tr><td>AES-256</td><td>256 比特</td><td>5</td></tr>
+</table>
+
+<h4>表 7：哈希函数与 XOFs</h4>
+<div style="overflow-x:auto">
+<table style="font-size:0.85em">
+  <tr><th>算法族</th><th>变体</th><th>碰撞安全强度</th><th>碰撞安全等级</th><th>原像安全强度</th><th>原像安全等级</th></tr>
+  <tr><td>SHA-1 [FIPS180]</td><td>SHA-1</td><td>80 比特</td><td>&lt;1</td><td>160 比特</td><td>1</td></tr>
+  <tr><td rowspan="4">SHA-2 [FIPS180]</td><td>SHA-224 / SHA-512/224</td><td>112 比特</td><td>&lt;1</td><td>224 比特</td><td>3</td></tr>
+  <tr><td>SHA-256 / SHA-512/256</td><td>128 比特</td><td>2</td><td>256 比特</td><td>5</td></tr>
+  <tr><td>SHA-384</td><td>192 比特</td><td>4</td><td>384 比特</td><td>5</td></tr>
+  <tr><td>SHA-512</td><td>256 比特</td><td>5</td><td>512 比特</td><td>5</td></tr>
+  <tr><td rowspan="6">SHA-3 [FIPS202]</td><td>SHA3-224</td><td>112 比特</td><td>&lt;1</td><td>224 比特</td><td>3</td></tr>
+  <tr><td>SHA3-256</td><td>128 比特</td><td>2</td><td>256 比特</td><td>5</td></tr>
+  <tr><td>SHAKE128</td><td>128 比特</td><td>2</td><td>128 比特</td><td>2</td></tr>
+  <tr><td>SHA3-384</td><td>192 比特</td><td>4</td><td>384 比特</td><td>5</td></tr>
+  <tr><td>SHA3-512</td><td>256 比特</td><td>5</td><td>512 比特</td><td>5</td></tr>
+  <tr><td>SHAKE256</td><td>256 比特</td><td>5</td><td>512 比特</td><td>5</td></tr>
+</table>
+</div>
+
+<!-- ====== 4.2 应用特定标准 ====== -->
+<h3>4.2. 应用特定标准与指南 (Application-Specific Standards and Guidelines)</h3>
+
+<p>
+NIST 制定和维护针对特定安全技术、协议和系统中密码使用的标准和指南。
+例如 FIPS 201-3 及其支持的 NIST 特刊规定了个人身份验证 (PIV) 标准；
+SP 800-52 修订版 2 规定了 TLS 服务器和客户端的使用指南。
+这些标准和指南定期更新，以应对基础标准和技术的变化以及新威胁的出现。
+</p>
+
+<p>
+在 PQC 迁移的整个过程中，NIST 将修订其文件，为特定应用提供更详细的弃用量子脆弱算法指南。
+虽然 NIST 的密码算法标准可能在 2035 年前继续规定量子脆弱技术并总体上允许其使用，但这些应用特定的标准和指南可能对其中使用的某些密码算法、技术和协议规定<strong>更早的过渡</strong>。
+这些指南将基于 CRQC 对这些应用的预期影响以及相关标准、产品和服务中 PQC 的支持水平制定。
+</p>
+
+<p>
+NIST 预期在这些更新中<strong>优先考虑抗量子密钥协商方案的迁移</strong>，以防止 HNDL 攻击——特别是在交互式协议如 <strong>TLS 和 IKE</strong> 中。
+NIST 还将与标准开发组织和行业协调，确保关键安全协议和技术得到及时更新以支持 PQC，同时认识到不同的应用领域将有不同的风险、安全需求和采用挑战。
+</p>
+
+<hr class="page-break">
+
+<!-- ====== 参考文献 ====== -->
+<h2 id="refs">参考文献 (References)</h2>
+
+<table style="font-size:0.88em">
+  <tr><th style="width:18%">代号</th><th>完整引用</th></tr>
+  <tr><td>[FIPS140]</td><td>NIST (2019) <em>Security Requirements for Cryptographic Modules</em>. FIPS 140-3.</td></tr>
+  <tr><td>[FIPS180]</td><td>NIST (2015) <em>Secure Hash Standard (SHS)</em>. FIPS 180-4.</td></tr>
+  <tr><td>[FIPS186]</td><td>NIST. <em>Digital Signature Standard (DSS)</em>. FIPS 186-5.</td></tr>
+  <tr><td>[FIPS197]</td><td>NIST (2001) <em>Advanced Encryption Standard (AES)</em>. FIPS 197.</td></tr>
+  <tr><td>[FIPS198]</td><td>NIST (2008) <em>The Keyed-Hash Message Authentication Code (HMAC)</em>. FIPS 198-1.</td></tr>
+  <tr><td>[FIPS202]</td><td>NIST (2015) <em>SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions</em>. FIPS 202.</td></tr>
+  <tr><td>[FIPS203]</td><td>NIST (2024) <em>Module-Lattice-Based Key-Encapsulation Mechanism Standard</em>. FIPS 203.</td></tr>
+  <tr><td>[FIPS204]</td><td>NIST (2024) <em>Module-Lattice-Based Digital Signature Standard</em>. FIPS 204.</td></tr>
+  <tr><td>[FIPS205]</td><td>NIST (2024) <em>Stateless Hash-Based Digital Signature Standard</em>. FIPS 205.</td></tr>
+  <tr><td>[NISTIR8528]</td><td>Alagic G, et al. (2024) <em>Status Report on the First Round of the Additional Digital Signature Schemes for the NIST PQC Standardization Process</em>. NIST IR 8528.</td></tr>
+  <tr><td>[NSM10]</td><td>Biden J (2022) <em>National Security Memorandum on Promoting United States Leadership in Quantum Computing While Mitigating Risks to Vulnerable Cryptographic Systems</em>. NSM-10, May 4, 2022.</td></tr>
+  <tr><td>[SP80056A]</td><td>Barker EB, et al. (2018) <em>Recommendation for Pair-Wise Key-Establishment Using Discrete Logarithm Cryptography</em>. NIST SP 800-56Ar3.</td></tr>
+  <tr><td>[SP80056B]</td><td>Barker EB, et al. (2019) <em>Recommendation for Pair-Wise Key-Establishment Using Integer Factorization Cryptography</em>. NIST SP 800-56Br2.</td></tr>
+  <tr><td>[SP80056C]</td><td>Barker E, Chen L, Davis R (2020) <em>Recommendation for Key-Derivation Methods in Key-Establishment Schemes</em>. NIST SP 800-56Cr2.</td></tr>
+  <tr><td>[SP80057]</td><td>Barker EB, Barker WC (2020) <em>Recommendation for Key Management: Part 1 – General</em>. NIST SP 800-57pt1r5.</td></tr>
+  <tr><td>[SP800131A]</td><td>Barker E, Roginsky A (2019) <em>Transitions: Recommendation for Transitioning the Use of Cryptographic Algorithms and Key Lengths</em>. NIST SP 800-131Ar2.</td></tr>
+  <tr><td>[SP800185]</td><td>Kelsey JM, et al. (2016) <em>SHA-3 Derived Functions: cSHAKE, KMAC, TupleHash, and ParallelHash</em>. NIST SP 800-185.</td></tr>
+  <tr><td>[SP800186]</td><td>Chen L, et al. (2023) <em>Recommendations for Discrete Logarithm-based Cryptography: Elliptic Curve Domain Parameters</em>. NIST SP 800-186.</td></tr>
+  <tr><td>[SP800208]</td><td>Cooper DA, et al. (2020) <em>Recommendation for Stateful Hash-Based Signature Schemes</em>. NIST SP 800-208.</td></tr>
+</table>
+
+<hr class="page-break">
+
+<!-- ====== 附录A 术语表 ====== -->
+<h2 id="glossary">附录 A：术语表 (Glossary)</h2>
+
+<div class="glossary">
+<dl>
+<dt>可接受 (Acceptable)</dt>
+<dd>批准使用。FIPS 或 SP 中被允许的算法和密钥长度/强度，按照相关指南被批准使用。</dd>
+
+<dt>已批准 (Approved)</dt>
+<dd>经 FIPS 批准和/或 NIST 推荐。一项算法或技术是 1) 在 FIPS 或 NIST 建议中规定的，或 2) 在 FIPS 或 NIST 建议中采纳的，或 3) 在 NIST 批准的安全功能列表中规定的。</dd>
+
+<dt>非对称密码 (Asymmetric Cryptography)</dt>
+<dd>使用两个独立密钥交换数据的密码学——一个用于加密或数字签名，另一个用于解密或验证签名。也称为公钥密码学。</dd>
+
+<dt>分组密码 (Block Cipher)</dt>
+<dd>一种可逆的对称密钥密码算法，使用密码密钥一次转换一个信息块。输出块与输入块长度相同。</dd>
+
+<dt>证书 (Certificate)</dt>
+<dd>一组数据，唯一标识一个公钥（其对应的私钥存在且被一个经授权使用该密钥对的所有者持有）。证书包含所有者的公钥和可能的其他信息，并由证书颁发机构数字签名，从而将公钥与所有者绑定。</dd>
+
+<dt>密码模块 (Cryptographic Module)</dt>
+<dd>实现已批准密码功能（包括密钥生成）的硬件、软件和/或固件集合，包含在模块的密码边界内。</dd>
+
+<dt>密码学相关量子计算机 (CRQC)</dt>
+<dd>一种量子计算机，能够实际攻击用传统计算机无法攻击的现实世界密码系统。</dd>
+
+<dt>已弃用 (Deprecated)</dt>
+<dd>算法和密钥长度可以使用，但用户必须接受一定的安全风险。此术语用于讨论可用于应用密码保护的密钥长度或算法。</dd>
+
+<dt>数字签名 (Digital Signature)</dt>
+<dd>对数据进行密码转换的结果，在正确实施时，提供验证来源真实性和数据完整性以及强制签名者不可否认性的机制。</dd>
+
+<dt>禁止使用 (Disallowed)</dt>
+<dd>算法或密钥长度不再被允许用于应用密码保护。</dd>
+
+<dt>双重签名 (Dual Signature)</dt>
+<dd>包括两个（或更多）签名在一条公共消息上。也可称为混合签名或复合签名。</dd>
+
+<dt>加密 (Encryption)</dt>
+<dd>使用密码算法和密钥将明文转换为密文的过程。</dd>
+
+<dt>可扩展输出函数 (XOF)</dt>
+<dd>一种对位串的函数，其输出可以扩展到任何所需长度。</dd>
+
+<dt>前向安全性 (Forward Secrecy)</dt>
+<dd>提供保护，防止已泄露的旧密钥被用于攻击仍在使用的用于完整性和机密性保护的较新派生密钥。</dd>
+
+<dt>哈希函数 (Hash Function)</dt>
+<dd>一种对位串的函数，输出长度固定。批准的哈希函数被设计为满足：(1) 单向性——计算上无法找到映射到任意新预指定输出的输入；(2) 抗碰撞性——计算上无法找到映射到相同输出的两个不同输入。</dd>
+
+<dt>KEM 合并器 (KEM Combiner)</dt>
+<dd>接受两个或多个共享秘密密钥并返回一个合并的共享秘密密钥的函数。</dd>
+
+<dt>密钥协商 (Key Agreement)</dt>
+<dd>一种密钥协商过程，最终产生的秘密密钥材料是由两个参与方贡献的信息的函数，使得任何一方都不能独立于另一方的贡献而预先确定秘密密钥材料的值。与密钥传输对比。</dd>
+
+<dt>密钥派生 (Key Derivation)</dt>
+<dd>以不可逆的方式从共享信息（其中部分信息是秘密的）中派生密钥的过程。</dd>
+
+<dt>密钥封装机制 (KEM)</dt>
+<dd>一组三个密码算法 (KeyGen, Encaps, Decaps)，两个参与方可通过公共信道建立共享秘密密钥。</dd>
+
+<dt>密钥协商 (Key Establishment)</dt>
+<dd>导致在不同参与方之间建立共享秘密密钥材料的过程。</dd>
+
+<dt>密钥传输 (Key Transport)</dt>
+<dd>一种密钥协商过程，由一方（发送者）选择秘密密钥材料的值，然后将其安全地分发给另一方（接收者）。与密钥协商对比。</dd>
+
+<dt>密钥包装 (Key Wrapping)</dt>
+<dd>保护秘密密钥材料（连同相关完整性信息）的方法，使用对称密钥算法同时提供机密性和完整性保护。</dd>
+
+<dt>遗留使用 (Legacy Use)</dt>
+<dd>算法或密钥长度仅可用于处理已受保护的信息（例如，解密密文数据或验证数字签名）。</dd>
+
+<dt>消息认证码 (MAC)</dt>
+<dd>使用对称密钥的数据密码校验和，用于检测数据的意外和蓄意修改。</dd>
+
+<dt>操作模式 (Mode of Operation)</dt>
+<dd>以对称密钥分组密码为特征的对数据进行密码转换的算法。</dd>
+
+<dt>公钥基础设施 (PKI)</dt>
+<dd>为颁发、维护和撤销公钥证书而建立的框架。</dd>
+
+<dt>安全等级 (Security Category)</dt>
+<dd>与 NIST 规定的后量子密码算法安全强度相关的数字，范围为 1 至 5。</dd>
+
+<dt>安全强度 (Security Strength)</dt>
+<dd>与破解密码算法或系统所需工作量（即操作数量）相关的数字。</dd>
+
+<dt>共享秘密 (Shared Secret)</dt>
+<dd>在密钥协商方案中计算出的、两个参与方均知晓的秘密值，用作密钥派生方法的输入以产生密钥材料。</dd>
+
+<dt>共享秘密密钥 (Shared Secret Key)</dt>
+<dd>可直接用作对称密码密码密钥的共享秘密，不需要额外的密钥派生。共享秘密密钥必须保持私有，并在不再需要时销毁。</dd>
+
+<dt>对称密钥密码学 (Symmetric Key Cryptography)</dt>
+<dd>使用相同秘密密钥进行操作和反转操作的密码算法（例如，用于加密和解密的 AES 密钥）。</dd>
+</dl>
+</div>
+
+<hr class="page-break">
+
+<div class="box warn" style="margin-top: 40px;">
+  <p class="noindent" style="margin:0;color:var(--danger);font-weight:700">免责声明与译本说明</p>
+  <p class="noindent" style="margin:6px 0 0 0;font-size:0.88em">
+    本中文译本由 <strong>NIST IR 8547 ipd</strong> (Initial Public Draft, November 2024) 翻译而来，仅供中文读者参考。
+    原文中的某些设备和材料标识不意味着 NIST 对任何产品或服务的推荐或认可。
+    译文中引用的所有 FIPS、SP 编号及 DOI 链接均与原文献保持一致。
+    如有释义差异，<strong>以英文原文为准</strong>。
+  </p>
+  <p class="noindent" style="margin:4px 0 0 0;font-size:0.88em">
+    原文获取：<a href="https://doi.org/10.6028/NIST.IR.8547.ipd">https://doi.org/10.6028/NIST.IR.8547.ipd</a><br>
+    原文引用格式：Moody D, Perlner R, Regenscheid A, Robinson A, Cooper D (2024) <em>Transition to Post-Quantum Cryptography Standards.</em> NIST IR 8547 ipd.
+  </p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC 组织自评引擎</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #06b6d4;
+    --accent-dark: #0891b2;
+    --accent2: #8b5cf6;
+    --red: #ef4444;
+    --orange: #f97316;
+    --yellow: #f59e0b;
+    --green: #10b981;
+    --bg-striped: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+
+  /* ====== HERO ====== */
+  .hero {
+    background: linear-gradient(160deg, #0a0e17 0%, #111827 40%, #1a1040 100%);
+    color: #fff;
+    padding: 64px 20px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(6,182,212,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6,182,212,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .hero h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 900; position: relative; }
+  .hero .sub { color: #94a3b8; font-size: 15px; margin-top: 8px; position: relative; }
+
+  /* ====== SECTION ====== */
+  .section { padding: 48px 0; }
+  .section + .section { border-top: 1px solid var(--border); }
+  .section-title {
+    font-size: 22px; font-weight: 800; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+  /* ====== INFO BOXES ====== */
+  .info-box {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #0c4a6e;
+    margin: 16px 0;
+  }
+  .warn-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #78350f;
+    margin: 16px 0;
+  }
+
+  /* ====== ASSESSMENT FORM ====== */
+  .form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .form-card:hover { border-color: #cbd5e1; }
+  .form-card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dimension-num {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .dimension-title { font-size: 16px; font-weight: 700; }
+  .dimension-weight {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-striped);
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+
+  .question-block {
+    margin-bottom: 16px;
+  }
+  .question-block:last-child { margin-bottom: 0; }
+  .question-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .question-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .option-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .option-item {
+    position: relative;
+    flex: 1;
+    min-width: 140px;
+  }
+  .option-item input { display: none; }
+  .option-item label {
+    display: block;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    background: var(--bg-card);
+  }
+  .option-item label:hover { border-color: #94a3b8; background: var(--bg-striped); }
+  .option-item input:checked + label {
+    border-color: var(--accent);
+    background: rgba(6,182,212,0.06);
+    color: var(--accent-dark);
+    font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(6,182,212,0.08);
+  }
+  .option-score {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  /* ====== BUTTONS ====== */
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(6,182,212,0.3);
+  }
+  .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--bg-card);
+    color: var(--text);
+    border: 2px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: #94a3b8; }
+
+  /* ====== RESULT PANEL ====== */
+  .result-panel {
+    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  .result-panel.show { display: block; }
+
+  .result-hero {
+    padding: 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .score-ring {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .score-ring-inner {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .score-total { font-size: 14px; color: var(--text-muted); }
+  .score-level {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .score-summary {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 8px auto 0;
+  }
+
+  .result-body { padding: 24px 32px; }
+  .result-section { margin-bottom: 24px; }
+  .result-section:last-child { margin-bottom: 0; }
+  .result-section h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* dimension bar */
+  .dim-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .dim-bar-label { font-size: 13px; min-width: 100px; font-weight: 500; }
+  .dim-bar-track {
+    flex: 1;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--bg-striped);
+    overflow: hidden;
+  }
+  .dim-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s ease;
+  }
+  .dim-bar-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    min-width: 40px;
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  /* radar mini */
+  .radar-mini {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  /* recommendation */
+  .rec-card {
+    background: var(--bg-striped);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--accent);
+  }
+  .rec-card.priority-high { border-left-color: var(--red); }
+  .rec-card.priority-mid { border-left-color: var(--orange); }
+  .rec-card.priority-low { border-left-color: var(--green); }
+  .rec-priority {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .rec-title { font-size: 14px; font-weight: 700; }
+  .rec-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* timeline */
+  .roadmap-phase {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .roadmap-phase::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    bottom: -16px;
+    width: 2px;
+    background: var(--border);
+  }
+  .roadmap-phase:last-child::before { display: none; }
+  .phase-marker {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .phase-content { flex: 1; }
+  .phase-title { font-size: 14px; font-weight: 700; }
+  .phase-time { font-size: 11px; color: var(--accent); margin-bottom: 4px; }
+  .phase-items { font-size: 13px; color: var(--text-secondary); }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .option-group { flex-direction: column; }
+    .option-item { min-width: 100%; }
+    .result-body { padding: 16px; }
+    .dim-bar-row { flex-wrap: wrap; }
+    .dim-bar-label { min-width: 80px; font-size: 12px; }
+  }
+
+  @media print {
+    body { font-size: 11px; }
+    .hero { background: #fff; color: #000; }
+    .btn-row { display: none; }
+    .result-panel { box-shadow: none; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ====== HERO ====== -->
+<header class="hero">
+  <h1>🔍 PQC 组织自评引擎</h1>
+  <p class="sub">Post-Quantum Cryptography Organizational Self-Assessment</p>
+  <p style="color:#64748b;font-size:13px;margin-top:12px;position:relative;">
+    6 大维度 · 18 道问题 · 约 5 分钟完成 · 即时生成评估报告与迁移路线图
+  </p>
+</header>
+
+<!-- ====== METHODOLOGY OVERVIEW ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">📐 评估方法论</div>
+    <p class="section-desc">
+      本自评引擎基于 <strong>NIST IR 8547、CNSA 2.0、国密商密认证体系、ISO 27001 密码控制项</strong> 设计，
+      覆盖组织 PQC 就绪度的六个关键维度。
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-weight:700;font-size:14px;">📋 维度一 · 权 20%</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">密码资产盘点<br><span style="font-size:11px;color:var(--text-muted);">你知道自己的系统里用了哪些密码算法吗？</span></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-weight:700;font-size:14px;">🔒 维度二 · 权 20%</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">数据敏感度与保护寿命<br><span style="font-size:11px;color:var(--text-muted);">你的数据有多值钱？需要保护多少年？</span></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-weight:700;font-size:14px;">📏 维度三 · 权 15%</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">合规暴露度<br><span style="font-size:11px;color:var(--text-muted);">你面临哪些监管要求？截止日期多近？</span></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-weight:700;font-size:14px;">🏗️ 维度四 · 权 15%</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">组织就绪度<br><span style="font-size:11px;color:var(--text-muted);">团队、预算、意识、决策层支持到位吗？</span></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-weight:700;font-size:14px;">🔗 维度五 · 权 15%</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">供应链依赖<br><span style="font-size:11px;color:var(--text-muted);">供应商和第三方系统的 PQC 准备如何？</span></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+        <div style="font-weight:700;font-size:14px;">⚙️ 维度六 · 权 15%</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">迁移执行能力<br><span style="font-size:11px;color:var(--text-muted);">你的技术栈、流程、工具准备好迁移了吗？</span></div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:20px;">
+      <strong>💡 评分逻辑：</strong>每道题 0-4 分，按维度权重加权求和，满分 100 分。评分反映的不是"你做错了什么"，
+      而是"你距离最佳实践还有多远"——这是一个<strong>成熟度模型</strong>，不是考试。
+    </div>
+  </div>
+</section>
+
+<!-- ====== SELF-ASSESSMENT FORM ====== -->
+<section class="section" id="assessmentForm">
+  <div class="container">
+    <div class="section-title">📝 开始自评</div>
+    <p class="section-desc">为每个问题选择最接近你组织现状的选项。不确定时，选偏保守的答案。</p>
+
+    <form id="pqcForm">
+
+      <!-- ===== DIMENSION 1: Crypto Inventory ===== -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="dimension-num">1</div>
+          <div class="dimension-title">密码资产盘点</div>
+          <div class="dimension-weight">权重 20%</div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q1. 组织是否拥有完整的密码算法资产清单（Cryptographic Inventory）？<span class="question-hint">— 即知道哪些系统用了 RSA、ECC、SM2、SM4 等</span></div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q1" id="q1a" value="0">
+              <label for="q1a">完全不知道<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q1" id="q1b" value="1">
+              <label for="q1b">零星记录，不成体系<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q1" id="q1c" value="2">
+              <label for="q1c">部分系统有清单<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q1" id="q1d" value="3">
+              <label for="q1d">大部分系统有自动化盘点<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q1" id="q1e" value="4">
+              <label for="q1e">完整 CBOM + 持续更新<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q2. 是否清楚哪些系统使用了量子脆弱算法（RSA、ECC、DSA、Diffie-Hellman）？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q2" id="q2a" value="0">
+              <label for="q2a">不清楚<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q2" id="q2b" value="1">
+              <label for="q2b">粗略知道一些<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q2" id="q2c" value="2">
+              <label for="q2c">核心系统已摸底<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q2" id="q2d" value="3">
+              <label for="q2d">已系统性标注脆弱面<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q2" id="q2e" value="4">
+              <label for="q2e">实时监控+自动告警<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q3. 是否了解每个密码资产对应的 <strong>数据保护寿命要求</strong>？（如：医疗记录 20 年、金融交易 7 年、国防密件 50 年）</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q3" id="q3a" value="0">
+              <label for="q3a">从未考虑过<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q3" id="q3b" value="1">
+              <label for="q3b">有定性认知<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q3" id="q3c" value="2">
+              <label for="q3c">核心数据已分级<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q3" id="q3d" value="3">
+              <label for="q3d">分级+寿命标签化<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q3" id="q3e" value="4">
+              <label for="q3e">全生命周期数据保护策略已建立<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DIMENSION 2: Data Sensitivity ===== -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="dimension-num">2</div>
+          <div class="dimension-title">数据敏感度与 HNDL 风险</div>
+          <div class="dimension-weight">权重 20%</div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q4. 组织处理的数据敏感度最高达到什么级别？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q4" id="q4a" value="0">
+              <label for="q4a">公开/非敏感<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q4" id="q4b" value="1">
+              <label for="q4b">内部业务数据<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q4" id="q4c" value="2">
+              <label for="q4c">个人隐私/客户数据<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q4" id="q4d" value="3">
+              <label for="q4d">金融/关基/国家安全<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q4" id="q4e" value="4">
+              <label for="q4e">国防/国家机密级<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q5. 组织的数据最需要保护多少年？（数据寿命）</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q5" id="q5a" value="0">
+              <label for="q5a">&lt; 1 年<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q5" id="q5b" value="1">
+              <label for="q5b">1-5 年<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q5" id="q5c" value="2">
+              <label for="q5c">5-10 年<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q5" id="q5d" value="3">
+              <label for="q5d">10-30 年<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q5" id="q5e" value="4">
+              <label for="q5e">&gt; 30 年 / 永久<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q6. 是否评估过 <strong>Harvest Now, Decrypt Later（HNDL）</strong> 威胁对组织的实际影响？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q6" id="q6a" value="0">
+              <label for="q6a">没听说过 HNDL<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q6" id="q6b" value="1">
+              <label for="q6b">了解概念，未评估<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q6" id="q6c" value="2">
+              <label for="q6c">初步评估进行中<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q6" id="q6d" value="3">
+              <label for="q6d">已完成评估，识别了暴露面<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q6" id="q6e" value="4">
+              <label for="q6e">HNDL 缓解措施已部署<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DIMENSION 3: Regulatory Exposure ===== -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="dimension-num">3</div>
+          <div class="dimension-title">合规暴露度</div>
+          <div class="dimension-weight">权重 15%</div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q7. 组织需要遵守哪些与密码相关的合规要求？（多选，按最严格的计分）</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q7" id="q7a" value="0">
+              <label for="q7a">无特定要求<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q7" id="q7b" value="1">
+              <label for="q7b">等保/ISO 27001 等通用框架<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q7" id="q7c" value="2">
+              <label for="q7c">密评 / 行业密码规范<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q7" id="q7d" value="3">
+              <label for="q7d">DORA / CNSA 2.0 / 关基商密规定<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q7" id="q7e" value="4">
+              <label for="q7e">涉密资质 / 国防/情报级<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q8. 最近的合规截止日期有多紧迫？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q8" id="q8a" value="0">
+              <label for="q8a">无明确截止日<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q8" id="q8b" value="1">
+              <label for="q8b">&gt; 10 年<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q8" id="q8c" value="2">
+              <label for="q8c">5-10 年<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q8" id="q8d" value="3">
+              <label for="q8d">3-5 年<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q8" id="q8e" value="4">
+              <label for="q8e">&lt; 3 年 / 已逾期<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q9. 组织是否已建立合规差距分析（你现在的密码体系 vs. 法规要求的差距）？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q9" id="q9a" value="0">
+              <label for="q9a">没做过<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q9" id="q9b" value="1">
+              <label for="q9b">粗略了解差距<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q9" id="q9c" value="2">
+              <label for="q9c">正在做差距分析<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q9" id="q9d" value="3">
+              <label for="q9d">已完成分析，有整改计划<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q9" id="q9e" value="4">
+              <label for="q9e">持续合规监控+自动报告<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DIMENSION 4: Organizational Readiness ===== -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="dimension-num">4</div>
+          <div class="dimension-title">组织就绪度</div>
+          <div class="dimension-weight">权重 15%</div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q10. 管理层对 PQC 迁移的认知和支持程度？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q10" id="q10a" value="0">
+              <label for="q10a">完全不了解<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q10" id="q10b" value="1">
+              <label for="q10b">听说过，未重视<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q10" id="q10c" value="2">
+              <label for="q10c">已纳入讨论议程<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q10" id="q10d" value="3">
+              <label for="q10d">有预算+有责任人<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q10" id="q10e" value="4">
+              <label for="q10e">董事会级优先事项<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q11. 团队是否具备 PQC 相关技能？（密码学、国密标准、迁移工程）</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q11" id="q11a" value="0">
+              <label for="q11a">无相关技能<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q11" id="q11b" value="1">
+              <label for="q11b">1-2 人有基础认知<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q11" id="q11c" value="2">
+              <label for="q11c">有密码专业人才<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q11" id="q11d" value="3">
+              <label for="q11d">专职 PQC 团队<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q11" id="q11e" value="4">
+              <label for="q11e">密码卓越中心 (CryptoCOE)<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q12. PQC 迁移的预算情况？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q12" id="q12a" value="0">
+              <label for="q12a">无预算<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q12" id="q12b" value="1">
+              <label for="q12b">零散的研究性支出<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q12" id="q12c" value="2">
+              <label for="q12c">已申请，待审批<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q12" id="q12d" value="3">
+              <label for="q12d">专项预算已批准<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q12" id="q12e" value="4">
+              <label for="q12e">多年期战略投资已到位<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DIMENSION 5: Supply Chain ===== -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="dimension-num">5</div>
+          <div class="dimension-title">供应链与第三方依赖</div>
+          <div class="dimension-weight">权重 15%</div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q13. 关键供应商/第三方系统是否已披露其 PQC 迁移路线图？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q13" id="q13a" value="0">
+              <label for="q13a">未询问过<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q13" id="q13b" value="1">
+              <label for="q13b">少数供应商有回应<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q13" id="q13c" value="2">
+              <label for="q13c">关键供应商已摸底<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q13" id="q13d" value="3">
+              <label for="q13d">PQC 要求已写入采购合同<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q13" id="q13e" value="4">
+              <label for="q13e">供应链 PQC 合规体系已建立<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q14. 是否在采购新系统/设备时加入了 PQC 兼容性要求？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q14" id="q14a" value="0">
+              <label for="q14a">从未考虑<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q14" id="q14b" value="1">
+              <label for="q14b">开始讨论<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q14" id="q14c" value="2">
+              <label for="q14c">部分采购已加入条款<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q14" id="q14d" value="3">
+              <label for="q14d">所有新采购必含 PQC 条款<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q14" id="q14e" value="4">
+              <label for="q14e">供应商 PQC 合规准入制度<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q15. 是否了解供应链中的 <strong>最薄弱环节</strong>（比如某个使用 RSA-1024 的遗留 IoT 设备）？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q15" id="q15a" value="0">
+              <label for="q15a">不了解<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q15" id="q15b" value="1">
+              <label for="q15b">大概知道<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q15" id="q15c" value="2">
+              <label for="q15c">已识别部分薄弱环节<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q15" id="q15d" value="3">
+              <label for="q15d">薄弱环节已纳入修复计划<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q15" id="q15e" value="4">
+              <label for="q15e">供应链韧性体系完善<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DIMENSION 6: Execution Capability ===== -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="dimension-num">6</div>
+          <div class="dimension-title">迁移执行能力</div>
+          <div class="dimension-weight">权重 15%</div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q16. 组织是否具备 <strong>密码敏捷性（Crypto-Agility）</strong>——即在不中断业务的情况下替换密码算法的能力？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q16" id="q16a" value="0">
+              <label for="q16a">硬编码，完全不具备<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q16" id="q16b" value="1">
+              <label for="q16b">部分模块可配置<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q16" id="q16c" value="2">
+              <label for="q16c">核心系统支持算法协商<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q16" id="q16d" value="3">
+              <label for="q16d">大部分系统密码敏捷<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q16" id="q16e" value="4">
+              <label for="q16e">全栈密码敏捷+自动化切换<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q17. 是否进行过 PQC 迁移 <strong>试点/概念验证（PoC）</strong>？（如：在 VPN/TLS/PKI 中测试 ML-KEM 混合模式）</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q17" id="q17a" value="0">
+              <label for="q17a">从未做过<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q17" id="q17b" value="1">
+              <label for="q17b">实验室研究阶段<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q17" id="q17c" value="2">
+              <label for="q17c">PoC 规划中<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q17" id="q17d" value="3">
+              <label for="q17d">至少一个 PoC 已完成<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q17" id="q17e" value="4">
+              <label for="q17e">生产级混合密码已部署<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Q18. 是否制定了正式的 <strong>PQC 迁移路线图</strong>（含时间表、里程碑、责任人）？</div>
+          <div class="option-group">
+            <div class="option-item">
+              <input type="radio" name="q18" id="q18a" value="0">
+              <label for="q18a">无路线图<span class="option-score">0 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q18" id="q18b" value="1">
+              <label for="q18b">有初步讨论<span class="option-score">1 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q18" id="q18c" value="2">
+              <label for="q18c">路线图草稿已形成<span class="option-score">2 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q18" id="q18d" value="3">
+              <label for="q18d">路线图已批准，正在执行<span class="option-score">3 分</span></label>
+            </div>
+            <div class="option-item">
+              <input type="radio" name="q18" id="q18e" value="4">
+              <label for="q18e">路线图执行中+季度回顾调整<span class="option-score">4 分</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BUTTONS ===== -->
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" onclick="calculateScore()">🚀 生成评估报告</button>
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 重新填写</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ====== RESULT PANEL ====== -->
+<section class="section" id="resultSection" style="display:none;">
+  <div class="container">
+    <div class="section-title">📊 评估报告</div>
+
+    <div class="result-panel show" id="resultPanel">
+      <!-- dynamically filled -->
+    </div>
+
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-secondary" onclick="window.print()">🖨️ 打印报告</button>
+      <button class="btn btn-secondary" onclick="scrollToForm()">📝 返回修改</button>
+    </div>
+  </div>
+</section>
+
+<script>
+// ==================== SCORE CALCULATION ====================
+const DIMENSIONS = [
+  { name: '密码资产盘点', weight: 0.20, color: '#06b6d4', questions: [1,2,3] },
+  { name: '数据敏感度与HNDL风险', weight: 0.20, color: '#ef4444', questions: [4,5,6] },
+  { name: '合规暴露度', weight: 0.15, color: '#f59e0b', questions: [7,8,9] },
+  { name: '组织就绪度', weight: 0.15, color: '#3b82f6', questions: [10,11,12] },
+  { name: '供应链依赖', weight: 0.15, color: '#8b5cf6', questions: [13,14,15] },
+  { name: '迁移执行能力', weight: 0.15, color: '#10b981', questions: [16,17,18] },
+];
+
+function getRadioValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? parseInt(el.value) : null;
+}
+
+function getAllScores() {
+  const scores = {};
+  for (let i = 1; i <= 18; i++) {
+    scores[i] = getRadioValue('q' + i);
+  }
+  return scores;
+}
+
+function isComplete(scores) {
+  return Object.values(scores).every(v => v !== null);
+}
+
+function calcDimensionScores(scores) {
+  return DIMENSIONS.map(d => {
+    const dimScores = d.questions.map(q => scores[q]);
+    const avg = dimScores.reduce((a,b) => a + b, 0) / dimScores.length;
+    const maxPossible = 4;
+    const pct = Math.round((avg / maxPossible) * 100);
+    return {
+      name: d.name,
+      weight: d.weight,
+      color: d.color,
+      rawAvg: avg,
+      pct: pct,
+      weightedScore: pct * d.weight,
+    };
+  });
+}
+
+function getLevel(totalScore) {
+  if (totalScore >= 85) return { level: '🚀 领跑者', color: '#10b981', desc: '你的组织在 PQC 准备方面处于全球领先水平。保持势头，关注最新威胁情报，持续优化迁移执行。', cls: 'level-leader' };
+  if (totalScore >= 65) return { level: '✅ 推进者', color: '#3b82f6', desc: '你的组织已启动实质性准备工作，但在某些维度仍有差距。建议聚焦短板维度，加速执行。', cls: 'level-advancer' };
+  if (totalScore >= 40) return { level: '⚠️ 起步者', color: '#f59e0b', desc: '你的组织已意识到 PQC 的重要性并开始行动，但准备程度还不够。需要加快节奏，尤其是密码资产盘点和组织就绪度。', cls: 'level-starter' };
+  if (totalScore >= 20) return { level: '🔴 观望者', color: '#f97316', desc: '你的组织对 PQC 有一定认知，但实质性准备严重不足。HNDL 风险正在累积，建议立即启动密码资产盘点和合规差距分析。', cls: 'level-watcher' };
+  return { level: '🆘 未准备', color: '#ef4444', desc: '你的组织目前对 PQC 几乎没有任何准备。在量子威胁逼近的背景下，这是一个高风险状态。建议立即与管理层沟通，启动最基础的准备工作。', cls: 'level-unprepared' };
+}
+
+function getRecommendations(dimScores, totalScore) {
+  const recs = [];
+  dimScores.forEach(d => {
+    if (d.pct < 30) {
+      recs.push({
+        priority: 'high',
+        priorityLabel: '🔴 高优先级',
+        title: `紧急启动：${d.name}`,
+        desc: getDimAdvice(d.name, 'critical'),
+      });
+    } else if (d.pct < 55) {
+      recs.push({
+        priority: 'mid',
+        priorityLabel: '🟡 中优先级',
+        title: `重点加强：${d.name}`,
+        desc: getDimAdvice(d.name, 'improve'),
+      });
+    }
+  });
+
+  // If total score is very low, add overall rec
+  if (totalScore < 30) {
+    recs.unshift({
+      priority: 'high',
+      priorityLabel: '🔴 最高优先级',
+      title: '立即行动：启动 PQC 基础准备工作',
+      desc: '建议在 30 天内完成：①向管理层做一次 PQC 威胁简报；②启动密码资产盘点项目；③指定 PQC 准备负责人。这三件事零成本启动，但能为后续工作奠定基础。',
+    });
+  }
+
+  // If total score is high, add strategic rec
+  if (totalScore >= 70) {
+    recs.push({
+      priority: 'low',
+      priorityLabel: '🟢 建议',
+      title: '持续优化与生态建设',
+      desc: '建议建立行业对标机制，参与标准制定，将 PQC 能力转化为市场竞争优势。考虑对外输出经验，建立行业影响力。',
+    });
+  }
+
+  return recs;
+}
+
+function getDimAdvice(dimName, level) {
+  const advice = {
+    '密码资产盘点': {
+      critical: '立即启动全组织密码资产盘点。至少做到：列出所有使用 HTTPS/TLS 的系统、所有使用数字签名的应用、所有 PKI 证书。免费工具如 OQS 的测试向量库可帮助快速起步。预算：0 元起步。',
+      improve: '从手动盘点升级到自动化扫描。引入 CBOM 概念，将密码资产纳入 CMDB。优先完成面向互联网的系统和外联接口的盘点。',
+    },
+    '数据敏感度与HNDL风险': {
+      critical: '立即识别组织中保护寿命超过 10 年的数据（金融记录、医疗档案、知识产权、客户 PII）。这些是 HNDL 攻击的首要目标。制作"数据保护寿命 vs. 密码寿命"对照表。',
+      improve: '对长寿命数据实施"先行迁移"策略——即使系统整体迁移尚未完成，优先对这些数据的传输和存储通道部署混合 PQC 保护。',
+    },
+    '合规暴露度': {
+      critical: '立即梳理适用于你组织的所有密码相关法规（等保级别、是否需密评、行业监管要求、是否有跨境数据传输）。制作合规日历，标注每个 deadline。',
+      improve: '完成正式合规差距分析文档，将差距转化为可执行的项目计划，明确每项差距的修复成本和时间。',
+    },
+    '组织就绪度': {
+      critical: '建议从三件事开始：①安排一次管理层 PQC 意识培训（1 小时即可）；②指定至少 1 人为 PQC 准备协调人；③申请一笔调研预算（即使只有 5 万元）。',
+      improve: '建立正式的 PQC 项目组，成员覆盖安全、网络、应用、合规、采购。申请专项预算。考虑人员培训或外部顾问支持。',
+    },
+    '供应链依赖': {
+      critical: '立即列出前 20 个关键 IT 供应商和安全产品供应商，向每家发送 PQC 路线图征询函。在新采购招标中至少加入"供应商需提供 PQC 迁移时间表"条款。',
+      improve: '将 PQC 兼容性要求系统性地嵌入采购合同模板。对存量供应商建立分级管理制度——按关键性和 PQC 准备度分类。',
+    },
+    '迁移执行能力': {
+      critical: '选择 1 个低风险场景（如内部 VPN 或测试环境 TLS）启动混合 PQC 概念验证。使用开源工具（liboqs + OpenSSL）可以在 2 周内完成。',
+      improve: '扩大 PoC 范围到生产环境的非关键路径。制定正式的 3-5 年迁移路线图，明确里程碑、预算和责任人。建立密码敏捷性架构原则。',
+    },
+  };
+  return advice[dimName]?.[level] || '请联系 PQC 专家进行定制化评估。';
+}
+
+function getRoadmap(totalScore) {
+  if (totalScore >= 70) {
+    return [
+      { phase: '短期', time: '2026 H2 - 2027', color: '#10b981', items: '完成全量密码资产自动化盘点；生产环境高优先级通道混合 PQC 部署；供应商 PQC 合规体系正式运行；密码敏捷性架构全面推广。' },
+      { phase: '中期', time: '2027 - 2029', color: '#3b82f6', items: '完成核心系统 PQC 迁移；遗留系统替换/隔离方案落地；CBOM 持续监控体系运行；参与行业标准制定。' },
+      { phase: '长期', time: '2030 - 2035', color: '#8b5cf6', items: '全组织量子安全就绪；密码体系持续演进；对外输出最佳实践；通过所有相关合规审查。' },
+    ];
+  } else if (totalScore >= 40) {
+    return [
+      { phase: '短期', time: '2026 H2 - 2027', color: '#f59e0b', items: '完成全量密码资产盘点；管理层 PQC 意识培训；启动合规差距分析；选择 1 个场景做 PoC；关键供应商 PQC 摸底。' },
+      { phase: '中期', time: '2027 - 2029', color: '#3b82f6', items: '密码敏捷性架构改造启动；高敏感数据通道优先迁移；专项预算到位+团队到位；供应链 PQC 条款制度化。' },
+      { phase: '长期', time: '2030 - 2035', color: '#8b5cf6', items: '全系统 PQC 迁移完成；持续合规监控；密码资产动态管理；组织量子安全文化成熟。' },
+    ];
+  } else {
+    return [
+      { phase: '短期', time: '2026 H2 - 2027', color: '#ef4444', items: '① 管理层 PQC 威胁简报（本月）；② 指定 PQC 协调人（本月）；③ 启动密码资产盘点（下月）；④ 合规要求梳理（本季度）；⑤ 申请首期预算（本季度）。' },
+      { phase: '中期', time: '2027 - 2029', color: '#f59e0b', items: '完成密码资产盘点；完成合规差距分析；PQC PoC 启动；团队技能建设（培训/招聘）；供应商 PQC 征询。' },
+      { phase: '长期', time: '2030 - 2035', color: '#3b82f6', items: '核心系统 PQC 迁移；密码敏捷性改造；全面合规达标；建立持续监控和演进机制。' },
+    ];
+  }
+}
+
+// ==================== MAIN ====================
+function calculateScore() {
+  const scores = getAllScores();
+  if (!isComplete(scores)) {
+    const missing = Object.entries(scores).filter(([k,v]) => v === null).map(([k]) => `Q${k}`);
+    alert(`请完成以下未填写的题目：${missing.join(', ')}`);
+    // Scroll to first missing
+    const firstMissing = missing[0].replace('Q', 'q');
+    const el = document.querySelector(`input[name="${firstMissing}"]`);
+    if (el) el.closest('.form-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const dimScores = calcDimensionScores(scores);
+  const totalScore = Math.round(dimScores.reduce((sum, d) => sum + d.weightedScore, 0));
+  const level = getLevel(totalScore);
+  const recs = getRecommendations(dimScores, totalScore);
+  const roadmap = getRoadmap(totalScore);
+
+  // Build result HTML
+  const ringColor = level.color;
+  const panel = document.getElementById('resultPanel');
+
+  let dimBarsHTML = dimScores.map(d => `
+    <div class="dim-bar-row">
+      <div class="dim-bar-label">${d.name}</div>
+      <div class="dim-bar-track">
+        <div class="dim-bar-fill" style="width:${d.pct}%;background:${d.color};"></div>
+      </div>
+      <div class="dim-bar-score">${d.pct}%</div>
+    </div>
+  `).join('');
+
+  let recsHTML = recs.map(r => `
+    <div class="rec-card priority-${r.priority}">
+      <div class="rec-priority" style="color:${r.priority === 'high' ? 'var(--red)' : r.priority === 'mid' ? 'var(--orange)' : 'var(--green)'}">${r.priorityLabel}</div>
+      <div class="rec-title">${r.title}</div>
+      <div class="rec-desc">${r.desc}</div>
+    </div>
+  `).join('');
+
+  let roadmapHTML = roadmap.map((p, i) => `
+    <div class="roadmap-phase">
+      <div class="phase-marker" style="background:${p.color};">${i+1}</div>
+      <div class="phase-content">
+        <div class="phase-time">${p.phase} · ${p.time}</div>
+        <div class="phase-title">${p.phase}目标</div>
+        <div class="phase-items">${p.items}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Mosca inequality check
+  const migrationTime = totalScore >= 70 ? '3-5 年' : totalScore >= 40 ? '5-8 年' : '8-12 年';
+  const dataLifespan = scores[5] >= 3 ? '> 10 年' : scores[5] >= 2 ? '5-10 年' : '< 5 年';
+  const moscaRisk = (scores[5] >= 3 && totalScore < 65) ? '⚠️ 高风险：数据保护寿命长于预估的迁移完成时间，存在 HNDL 暴露窗口' : '✅ 可控：预估迁移时间可以覆盖数据保护寿命需求';
+
+  panel.innerHTML = `
+    <div class="result-hero">
+      <div class="score-ring" style="background:conic-gradient(${ringColor} ${totalScore}%, #e2e8f0 ${totalScore}%);">
+        <div class="score-ring-inner">
+          <div class="score-value" style="color:${ringColor}">${totalScore}</div>
+          <div class="score-total">/ 100</div>
+        </div>
+      </div>
+      <div class="score-level" style="color:${ringColor}">${level.level}</div>
+      <div class="score-summary">${level.desc}</div>
+    </div>
+
+    <div class="result-body">
+      <div class="result-section">
+        <h4>📊 六维度得分明细</h4>
+        ${dimBarsHTML}
+      </div>
+
+      <div class="result-section">
+        <h4>⏱️ Mosca 不等式评估</h4>
+        <div style="font-size:13px;color:var(--text-secondary);background:var(--bg-striped);padding:16px;border-radius:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span>预估迁移时间：<strong>${migrationTime}</strong></span>
+            <span>数据保护寿命需求：<strong>${dataLifespan}</strong></span>
+          </div>
+          <div style="font-weight:600;color:${moscaRisk.includes('高风险') ? 'var(--red)' : 'var(--green)'}">${moscaRisk}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+            Mosca 不等式：如果 迁移时间 + 数据保护寿命 &lt; 量子威胁到达时间，则组织存在暴露风险。
+          </div>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <h4>🎯 优先行动建议</h4>
+        ${recsHTML}
+      </div>
+
+      <div class="result-section">
+        <h4>🗺️ 建议迁移路线图</h4>
+        ${roadmapHTML}
+      </div>
+
+      <div class="result-section">
+        <h4>📈 行业对标</h4>
+        <div style="font-size:13px;color:var(--text-secondary);">
+          你的得分 <strong style="color:${ringColor}">${totalScore}/100</strong> 处于
+          <strong>"${level.level.replace(/[^一-龥]/g,'')}"</strong> 区间。
+          全球同行业均值：金融 78% · 政府 62% · 电信 41% · 制造业 33% · 医疗 28%。
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Show result
+  document.getElementById('resultSection').style.display = 'block';
+  document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.dim-bar-fill').forEach(bar => {
+      bar.style.width = bar.style.width; // trigger reflow for animation
+    });
+  }, 100);
+}
+
+function resetForm() {
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('assessmentForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function scrollToForm() {
+  document.getElementById('assessmentForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ==================== INIT ====================
+console.log('%c🔍 PQC 组织自评引擎 %cv1.0',
+  'font-size:16px;font-weight:bold;color:#06b6d4;', 'color:#64748b;');
+console.log('%c6 维度 · 18 题 · 即时评估报告 · 迁移路线图',
+  'color:#94a3b8;font-size:11px;');
+</script>
+
+</body>
+</html>

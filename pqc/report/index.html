@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后量子密码学（PQC）研究报告</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --warn: #d29922;
+    --danger: #f85149;
+    --purple: #a371f7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+    background: var(--bg); color: var(--text); line-height:1.8;
+    max-width: 960px; margin: 0 auto; padding: 40px 24px;
+  }
+  h1 { font-size:2.2em; text-align:center; margin-bottom:8px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  h1 + p { text-align:center; color:var(--text-secondary); margin-bottom:40px; }
+  h2 { font-size:1.5em; color:var(--accent); border-bottom:1px solid var(--border); padding-bottom:8px; margin:48px 0 20px; }
+  h3 { font-size:1.15em; color:var(--accent2); margin:28px 0 12px; }
+  p { margin:12px 0; color:var(--text); }
+  ul, ol { margin:12px 0 12px 24px; color:var(--text); }
+  li { margin:6px 0; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+
+  /* 卡片 */
+  .card {
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; margin:16px 0;
+  }
+  .card.warn { border-left:4px solid var(--warn); }
+  .card.danger { border-left:4px solid var(--danger); }
+  .card.success { border-left:4px solid var(--accent2); }
+  .card-title { font-weight:700; font-size:1.05em; margin-bottom:8px; }
+
+  /* 统计条 */
+  .stat-row { display:flex; gap:16px; flex-wrap:wrap; margin:16px 0; }
+  .stat-box {
+    flex:1; min-width:130px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; text-align:center;
+  }
+  .stat-num { font-size:2em; font-weight:800; color:var(--accent); }
+  .stat-label { font-size:0.85em; color:var(--text-secondary); margin-top:4px; }
+
+  /* 时间线 */
+  .timeline { position:relative; padding-left:32px; margin:20px 0; }
+  .timeline::before { content:''; position:absolute; left:12px; top:0; bottom:0; width:2px; background:var(--border); }
+  .tl-item { position:relative; margin-bottom:24px; }
+  .tl-item::before { content:''; position:absolute; left:-24px; top:6px; width:10px; height:10px; border-radius:50%; background:var(--accent); border:2px solid var(--bg); }
+  .tl-year { color:var(--accent); font-weight:700; font-size:0.95em; }
+  .tl-text { color:var(--text); }
+
+  /* 对比表 */
+  table { width:100%; border-collapse:collapse; margin:16px 0; font-size:0.94em; }
+  th { background:var(--surface); color:var(--accent); text-align:left; padding:10px 14px; border:1px solid var(--border); }
+  td { padding:10px 14px; border:1px solid var(--border); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+
+  /* Mermaid 暗色适配 */
+  .mermaid { background:var(--surface); border-radius:8px; padding:16px; margin:16px 0; text-align:center; }
+  .mermaid svg { max-width:100%; }
+
+  /* SVG 图表 */
+  .diagram-box { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:20px; margin:16px 0; text-align:center; }
+  .diagram-box svg { max-width:100%; }
+
+  /* 引用块 */
+  blockquote {
+    border-left:3px solid var(--accent); padding:8px 16px; margin:16px 0; background:rgba(88,166,255,0.05); border-radius:0 6px 6px 0; color:var(--text-secondary);
+  }
+
+  /* 标签 */
+  .tag { display:inline-block; padding:2px 10px; border-radius:12px; font-size:0.8em; margin:0 4px; }
+  .tag-green { background:rgba(63,185,80,0.15); color:var(--accent2); }
+  .tag-yellow { background:rgba(210,153,34,0.15); color:var(--warn); }
+  .tag-red { background:rgba(248,81,73,0.15); color:var(--danger); }
+  .tag-blue { background:rgba(88,166,255,0.15); color:var(--accent); }
+  .tag-purple { background:rgba(163,113,247,0.15); color:var(--purple); }
+
+  /* 算法标签组 */
+  .algo-group { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+  .algo-card {
+    flex:1; min-width:200px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px;
+  }
+  .algo-card h4 { color:var(--accent); margin-bottom:6px; font-size:1.05em; }
+  .algo-card p { font-size:0.9em; color:var(--text-secondary); margin:4px 0; }
+
+  /* 响应式 */
+  @media (max-width:640px) {
+    body { padding:16px; }
+    h1 { font-size:1.6em; }
+    .stat-row { flex-direction:column; }
+    .algo-group { flex-direction:column; }
+  }
+
+  /* 目录 */
+  #toc { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  #toc ol { margin:8px 0 0 20px; }
+  #toc a { color:var(--text); }
+  #toc a:hover { color:var(--accent); }
+
+  /* 脚注 */
+  .footnotes { font-size:0.85em; color:var(--text-secondary); border-top:1px solid var(--border); margin-top:48px; padding-top:16px; }
+  sup a { font-size:0.8em; color:var(--accent); }
+
+  /* 代码 */
+  code { background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.9em; }
+  pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:0.88em; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<h1>🔐 后量子密码学（PQC）研究报告</h1>
+<p>——量子计算时代的密码迁移路线图</p>
+<p style="text-align:center;color:var(--text-secondary);font-size:0.9em">生成日期：2026年6月2日 &nbsp;|&nbsp; 基于 NIST、NSA、BSI、ETSI 公开资料综合编撰</p>
+
+<!-- ===== 目录 ===== -->
+<div id="toc">
+  <strong>📑 目录</strong>
+  <ol>
+    <li><a href="#s1">量子威胁：为什么现在就要行动</a></li>
+    <li><a href="#s2">NIST PQC 标准化进程（2016–2030）</a></li>
+    <li><a href="#s3">核心算法详解</a></li>
+    <li><a href="#s4">算法对比矩阵</a></li>
+    <li><a href="#s5">全球迁移路线图与政策驱动</a></li>
+    <li><a href="#s6">行业采用现状</a></li>
+    <li><a href="#s7">Harvest-Now-Decrypt-Later 攻击</a></li>
+    <li><a href="#s8">实施挑战与最佳实践</a></li>
+    <li><a href="#s9">建议与行动清单</a></li>
+    <li><a href="#refs">参考资料</a></li>
+  </ol>
+</div>
+
+<!-- ===== 关键数据速览 ===== -->
+<div class="stat-row">
+  <div class="stat-box"><div class="stat-num">4</div><div class="stat-label">NIST 已标准化算法</div></div>
+  <div class="stat-box"><div class="stat-num">~2030</div><div class="stat-label">NSA CNSA 2.0 迁移截止</div></div>
+  <div class="stat-box"><div class="stat-num">1M+</div><div class="stat-label">已部署 ML-KEM 的 Chromium 实例</div></div>
+  <div class="stat-box"><div class="stat-num">~2035</div><div class="stat-label">预计 RSA-2048 可被破解</div></div>
+  <div class="stat-box"><div class="stat-num">10–20 年</div><div class="stat-label">密码系统迁移周期</div></div>
+</div>
+
+<!-- ===== 第 1 章 ===== -->
+<h2 id="s1">1. 量子威胁：为什么现在就要行动</h2>
+
+<h3>1.1 Shor 算法与公钥密码的末日</h3>
+<p>
+1994 年，Peter Shor 证明：<strong>足够大的量子计算机可以在多项式时间内分解大整数和计算离散对数</strong>。这意味着当前互联网安全的基石——RSA、ECDH、ECDSA、DSA——将在实用级量子计算机面前一夜崩塌<span class="tag tag-red">致命威胁</span>。
+</p>
+
+<div class="mermaid">
+gantt
+    title 量子威胁时间线预估
+    dateFormat  YYYY
+    axisFormat  %Y
+    section 量子硬件发展
+      NISQ 时代（含噪中等规模量子）    :2020, 2030
+      逻辑量子比特突破                    :2028, 2033
+      破解 RSA-2048 的容错量子计算机         :2033, 2040
+    section 密码迁移
+      NIST PQC 标准化                    :2016, 2030
+      CNSA 2.0 软件/固件签名迁移截止        :2025, 2030
+      CNSA 2.0 浏览/Web 迁移截止             :2028, 2033
+      CNSA 2.0 传统网络设备迁移截止          :2028, 2035
+    section 攻击窗口
+      Harvest-Now-Decrypt-Later 风险窗口       :2020, 2040
+</div>
+
+<h3>1.2 Mosca 不等式</h3>
+<div class="card danger">
+  <div class="card-title">⚠️ Mosca 不等式：x + y > z → 系统已不安全</div>
+  <p style="margin:0">
+    <strong>x</strong> = 你的数据需要保持安全的年数<br>
+    <strong>y</strong> = 迁移到 PQC 所需的年数<br>
+    <strong>z</strong> = 大规模量子计算机出现的年数<br><br>
+    如果 <strong>x + y > z</strong>，你现在就必须开始迁移。对于大多数需要保护 10 年以上敏感数据的组织，这个不等式<strong>已经成立</strong>。
+  </p>
+</div>
+
+<h3>1.3 哪些算法会被量子计算机攻破？</h3>
+<div class="stat-row">
+  <div class="stat-box" style="border-color:var(--danger)">
+    <div style="font-size:1.5em;color:var(--danger);font-weight:800">完全攻破</div>
+    <div class="stat-label">RSA、ECDSA、ECDH、EdDSA、DSA、DH</div>
+  </div>
+  <div class="stat-box" style="border-color:var(--warn)">
+    <div style="font-size:1.5em;color:var(--warn);font-weight:800">强度减半</div>
+    <div class="stat-label">AES-256 → 等效 128 位<br>SHA-256 → 等效 128 位</div>
+  </div>
+  <div class="stat-box" style="border-color:var(--accent2)">
+    <div style="font-size:1.5em;color:var(--accent2);font-weight:800">基本安全</div>
+    <div class="stat-label">Lattice-based、Hash-based、Code-based、Multivariate PQC</div>
+  </div>
+</div>
+
+<!-- ===== 第 2 章 ===== -->
+<h2 id="s2">2. NIST PQC 标准化进程（2016–2030）</h2>
+
+<div class="mermaid">
+timeline
+    title NIST PQC 标准化路线图
+    2016 : 公开征集提案
+    2017–2019 : 第一轮评估（69→26）
+    2019–2020 : 第二轮评估（26→15）
+    2020–2022 : 第三轮评估（15→7 决赛 + 8 候补）
+    2022 : CRYSTALS-Kyber 入选 KEM
+    2024 : ML-KEM (FIPS 203) 发布<br>ML-DSA (FIPS 204) 发布<br>SLH-DSA (FIPS 206) 发布
+    2025 : HQC 入选备用 KEM
+    2027–2028 : FN-DSA (FALCON) 标准化（预计）<br>Classic McEliece（预计）
+    2030 : CNSA 2.0 软件签名截止<br>传统算法逐步淘汰
+</div>
+
+<h3>2.1 已发布标准概览</h3>
+
+<div class="algo-group">
+  <div class="algo-card">
+    <h4>🟢 FIPS 203 — ML-KEM</h4>
+    <p><span class="tag tag-green">KEM/密钥封装</span></p>
+    <p>原 CRYSTALS-Kyber，基于格密码（Module-LWE）。用于替代 RSA-OAEP 和 ECDH 密钥交换。</p>
+    <p><strong>安全等级：</strong>1, 3, 5</p>
+    <p><strong>公钥：</strong>800–1568 字节</p>
+    <p><strong>密文：</strong>768–1568 字节</p>
+  </div>
+  <div class="algo-card">
+    <h4>🟢 FIPS 204 — ML-DSA</h4>
+    <p><span class="tag tag-blue">签名</span></p>
+    <p>原 CRYSTALS-Dilithium，基于格密码（Module-LWE+SIS）。用于替代 ECDSA 和 RSA-PSS 签名。</p>
+    <p><strong>安全等级：</strong>2, 3, 5</p>
+    <p><strong>公钥：</strong>1312–2592 字节</p>
+    <p><strong>签名：</strong>2420–4627 字节</p>
+  </div>
+  <div class="algo-card">
+    <h4>🟢 FIPS 205 — SLH-DSA</h4>
+    <p><span class="tag tag-purple">签名（无状态）</span></p>
+    <p>原 SPHINCS+，基于哈希的签名方案。作为 ML-DSA 的后备，不依赖格假设。</p>
+    <p><strong>安全等级：</strong>1, 3, 5</p>
+    <p><strong>签名：</strong>7856–49856 字节</p>
+    <p><strong>优势：</strong>安全假设最保守</p>
+  </div>
+</div>
+
+<!-- ===== 第 3 章 ===== -->
+<h2 id="s3">3. 核心算法详解</h2>
+
+<h3>3.1 ML-KEM（原 CRYSTALS-Kyber）— FIPS 203</h3>
+<p>
+<strong>类型：</strong>格密码 | <strong>数学基础：</strong>Module Learning With Errors（Module-LWE）
+</p>
+<p>
+ML-KEM 是目前唯一的 NIST 标准化密钥封装机制（KEM），用于替代 TLS 1.3、SSH、IPsec、S/MIME 等协议中的 ECDH/RSA 密钥交换。其安全性归约到格上最坏情况难题的困难性。
+</p>
+<div class="card success">
+  <div class="card-title">✅ 已大规模部署验证</div>
+  <p>Google Chrome 自 2023 年起在 TLS 1.3 中默认启用 Kyber768（CECPQ2 的后续），保护了超过 <strong>1 万亿次日均连接</strong>。Apple iMessage 自 iOS 17.4 起启用 PQ3 协议，使用 Kyber 作为密钥封装。Signal 的 PQXDH 协议同样基于 Kyber。</p>
+</div>
+
+<h3>3.2 ML-DSA（原 CRYSTALS-Dilithium）— FIPS 204</h3>
+<p>
+<strong>类型：</strong>格密码 | <strong>数学基础：</strong>Module-LWE + Module-SIS（Short Integer Solution）
+</p>
+<p>
+ML-DSA 是 NIST 的主推签名方案，签名和公钥大小适中，验签速度快。适合代码签名、文档签名、PKI 证书等场景。
+</p>
+<div class="card warn">
+  <div class="card-title">⚠️ 确定性变体仍在评估中</div>
+  <p>Hedged ML-DSA（FIPS 204 附录）在 2025 年被报告存在侧信道弱点，NIST 目前仅推荐使用非确定性（随机 nonce）模式。在 HSMs 和受限环境中需要额外注意。</p>
+</div>
+
+<h3>3.3 SLH-DSA（原 SPHINCS+）— FIPS 205</h3>
+<p>
+<strong>类型：</strong>基于哈希的签名 | <strong>数学基础：</strong>Merkle 树 + 少数次签名方案（WOTS+/FORS）
+</p>
+<p>
+SLH-DSA 是"保险方案"——安全仅依赖哈希函数的抗碰撞性，不依赖任何格或编码假设。但代价是签名体积巨大（可达 50KB），不适合带宽敏感场景。NIST 推荐将其作为关键基础设施的第二签名方案。
+</p>
+
+<h3>3.4 FN-DSA（原 FALCON）— 预计 FIPS 206</h3>
+<p>
+<strong>类型：</strong>格密码 | <strong>数学基础：</strong>NTRU 格 + 陷门采样（ffSampling）
+</p>
+<p>
+FALCON 相比 ML-DSA 签名更小（约 690–1330 字节），但签名生成需要浮点 FFT 运算，在硬件中实现更复杂。NIST 预计 2027–2028 年发布最终标准。TLS 和 PKI 是其主要应用场景。
+</p>
+
+<h3>3.5 HQC — 备选 KEM</h3>
+<p>
+<strong>类型：</strong>基于编码的密码学 | <strong>数学基础：</strong>拟循环中等密度校验子译码（QC-MDPC）
+</p>
+<p>
+2025 年 3 月，NIST 选择 HQC 作为备用 KEM。如果 ML-KEM 在未来被格归约突破，HQC 提供了一个基于完全不同数学假设的应急方案。
+</p>
+
+<h3>3.6 Classic McEliece — 长期候选</h3>
+<p>
+<strong>类型：</strong>基于编码的密码学 | <strong>数学基础：</strong>Goppa 码译码
+</p>
+<p>
+Classic McEliece 从 1978 年存活至今未被攻破，是所有 PQC 候选中最经受时间考验的。但其公钥巨大（约 261KB–1.3MB），仅适合代码签名等低频使用场景。NIST 仍在评估其标准化路径。
+</p>
+
+<!-- ===== 第 4 章 ===== -->
+<h2 id="s4">4. 算法对比矩阵</h2>
+
+<div style="overflow-x:auto">
+<table>
+  <thead>
+    <tr>
+      <th>算法</th>
+      <th>类型</th>
+      <th>功能</th>
+      <th>安全等级</th>
+      <th>公钥 (字节)</th>
+      <th>签名/密文 (字节)</th>
+      <th>速度</th>
+      <th>成熟度</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>ML-KEM-768</strong></td>
+      <td>格 (Module-LWE)</td>
+      <td>KEM</td>
+      <td>3</td>
+      <td>1184</td>
+      <td>1088</td>
+      <td>🚀 极快</td>
+      <td><span class="tag tag-green">FIPS 203</span></td>
+    </tr>
+    <tr>
+      <td><strong>ML-DSA-65</strong></td>
+      <td>格 (MLWE+SIS)</td>
+      <td>签名</td>
+      <td>3</td>
+      <td>1952</td>
+      <td>3309</td>
+      <td>🚀 极快</td>
+      <td><span class="tag tag-green">FIPS 204</span></td>
+    </tr>
+    <tr>
+      <td><strong>SLH-DSA-128s</strong></td>
+      <td>哈希 (SPHINCS+)</td>
+      <td>签名</td>
+      <td>1</td>
+      <td>32</td>
+      <td>7856</td>
+      <td>🐢 慢</td>
+      <td><span class="tag tag-green">FIPS 205</span></td>
+    </tr>
+    <tr>
+      <td><strong>FN-DSA-512</strong></td>
+      <td>格 (NTRU)</td>
+      <td>签名</td>
+      <td>1</td>
+      <td>897</td>
+      <td>690</td>
+      <td>⚡ 快</td>
+      <td><span class="tag tag-yellow">草稿 FIPS 206</span></td>
+    </tr>
+    <tr>
+      <td><strong>HQC-128</strong></td>
+      <td>编码 (QC-MDPC)</td>
+      <td>KEM</td>
+      <td>1</td>
+      <td>2249</td>
+      <td>4481</td>
+      <td>🐢 慢</td>
+      <td><span class="tag tag-yellow">备用（2025）</span></td>
+    </tr>
+    <tr>
+      <td><strong>Classic McEliece</strong></td>
+      <td>编码 (Goppa)</td>
+      <td>KEM</td>
+      <td>1</td>
+      <td>261,120</td>
+      <td>128</td>
+      <td>⚡ 快</td>
+      <td><span class="tag tag-yellow">评估中</span></td>
+    </tr>
+    <tr style="opacity:0.5">
+      <td>RSA-2048（对比）</td>
+      <td>大整数分解</td>
+      <td>KEM+签名</td>
+      <td>—</td>
+      <td>256</td>
+      <td>256</td>
+      <td>🚀 快</td>
+      <td><span class="tag tag-red">量子不安全</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===== 第 5 章 ===== -->
+<h2 id="s5">5. 全球迁移路线图与政策驱动</h2>
+
+<h3>5.1 美国 NSA — CNSA 2.0 时间线</h3>
+<div class="timeline">
+  <div class="tl-item"><div class="tl-year">2022</div><div class="tl-text">NSA 发布 CNSA 2.0，宣布从 CNSA 1.0（传统算法）全面转向 PQC</div></div>
+  <div class="tl-item"><div class="tl-year">2025</div><div class="tl-text">软件和固件签名必须迁移到 PQC</div></div>
+  <div class="tl-item"><div class="tl-year">2026</div><div class="tl-text">Web 浏览器、服务器、云服务开始迁移</div></div>
+  <div class="tl-item"><div class="tl-year">2030</div><div class="tl-text">所有 NSS（国家安全系统）必须完成 PQC 迁移</div></div>
+  <div class="tl-item"><div class="tl-year">2033</div><div class="tl-text">传统网络设备（VPN、路由器等）迁移截止</div></div>
+</div>
+
+<h3>5.2 欧盟 — ETSI 与 BSI</h3>
+<div class="card">
+  <p><strong>ETSI TC CYBER</strong> 发布了 PQC 迁移指南（TR 103 964 等），推荐混合模式过渡（传统+PQC）。</p>
+  <p><strong>德国 BSI</strong> 早在 2017 年就发布了全球首个 PQC 建议（TR-02102-1），持续更新算法推荐清单。BSI 推崇 ML-KEM + ML-DSA/FN-DSA 的组合理念，并强烈建议在所有关键基础设施中添加基于哈希的 SLH-DSA 作为第二签名方案。</p>
+</div>
+
+<h3>5.3 中国</h3>
+<p>
+中国正在推进自主 PQC 标准，主要集中在基于格和基于编码的方案。中国密码管理局（OSCCA）已公开征集 PQC 算法，并推动 SM2/SM9 的量子安全替代方案研究。在国际标准化方面，中国专家积极参与 ISO/IEC JTC 1/SC 27/WG 2 的 PQC 工作组。
+</p>
+
+<h3>5.4 金融行业</h3>
+<p>
+<strong>PCI DSS 4.0.1</strong>（2024）首次要求支付卡行业评估量子计算对加密系统的影响。<strong>FS-ISAC</strong> 发布了金融服务业 PQC 迁移白皮书，建议在 2028 年前完成清点所有加密资产，2033 年前完成核心银行系统的 PQC 迁移。
+</p>
+
+<div class="mermaid">
+flowchart LR
+    A["📋 清点加密资产<br>（进行中）"] --> B["🔬 混合部署<br>PQC + 传统算法<br>（2025–2028）"]
+    B --> C["🔄 逐步淘汰<br>RSA/ECDH/ECDSA<br>（2028–2033）"]
+    C --> D["✅ 纯 PQC<br>仅用量子安全算法<br>（2033+）"]
+    style A fill:#161b22,stroke:#58a6ff,color:#58a6ff
+    style B fill:#161b22,stroke:#d29922,color:#d29922
+    style C fill:#161b22,stroke:#f85149,color:#f85149
+    style D fill:#161b22,stroke:#3fb950,color:#3fb950
+</div>
+
+<!-- ===== 第 6 章 ===== -->
+<h2 id="s6">6. 行业采用现状</h2>
+
+<div class="algo-group">
+  <div class="algo-card">
+    <h4>🔍 Google / Chrome</h4>
+    <p>Chrome 116+ 默认启用 Kyber768 TLS 1.3 混合密钥交换（X25519Kyber768）。保护全球数十亿用户的浏览流量。Android 14+ 同样启用 PQC 密钥协商。</p>
+  </div>
+  <div class="algo-card">
+    <h4>🍎 Apple</h4>
+    <p>iOS 17.4、macOS 14.4 起推出 PQ3 协议，iMessage 实现 Level 3 安全（初始密钥 + 传统 ECDH + 周期 PQC 重加密）。Apple 称之为"迄今为止最安全的即时通讯协议"。</p>
+  </div>
+  <div class="algo-card">
+    <h4>📱 Signal</h4>
+    <p>2023 年 9 月推出 PQXDH（Post-Quantum Extended Diffie-Hellman），将 X3DH 升级为包含 Kyber-1024 的混合协议。所有新 Signal 对话默认使用 PQXDH。</p>
+  </div>
+</div>
+
+<div class="algo-group">
+  <div class="algo-card">
+    <h4>☁️ AWS</h4>
+    <p>AWS KMS 支持 ML-KEM 密钥封装，ACM 支持 PQC 混合证书。AWS 倡导"混合证书"方式以保持与传统客户端的兼容。</p>
+  </div>
+  <div class="algo-card">
+    <h4>🏦 Mastercard</h4>
+    <p>2026 年提出后量子支付规范，目标在 2030 年前完成支付网络的 PQC 迁移。</p>
+  </div>
+  <div class="algo-card">
+    <h4>🔐 Cloudflare</h4>
+    <p>2024 年起为所有 Free 计划用户默认启用 PQC TLS。截止 2025 年底，超过 35% 的 Cloudflare 入站连接使用 PQC。</p>
+  </div>
+</div>
+
+<div class="algo-group">
+  <div class="algo-card">
+    <h4>🪟 Microsoft</h4>
+    <p>SymCrypt 库已集成 ML-KEM、ML-DSA。Windows 11 预览版支持 PQC TLS。Azure 正在推广 PQC 混合证书。</p>
+  </div>
+  <div class="algo-card">
+    <h4>🐧 Linux 内核</h4>
+    <p>自 6.1 内核起支持 Kyber，自 6.11 起支持 ML-DSA。OpenSSL 3.5+、BoringSSL、liboqs 全面支持 PQC 算法。</p>
+  </div>
+  <div class="algo-card">
+    <h4>🏛️ 政府</h4>
+    <p>美国 OMB 备忘录 M-23-02 要求联邦机构在 2024 年 5 月前完成加密资产清点。NSA 指示所有 NSS 必须在 2030 年前完成 PQC 迁移。</p>
+  </div>
+</div>
+
+<!-- ===== 第 7 章 ===== -->
+<h2 id="s7">7. Harvest-Now-Decrypt-Later 攻击</h2>
+
+<div class="card danger">
+  <div class="card-title">🔴 这是最被低估的威胁</div>
+  <p>
+    <strong>Harvest-Now-Decrypt-Later（HNDL）</strong>：攻击者现在大量截获和存储加密流量，等待量子计算机成熟后解密。对于需要保密超过 10–15 年的数据，HNDL 攻击<strong>今天就已经在发生</strong>。
+  </p>
+</div>
+
+<h3>7.1 HNDL 攻击流程</h3>
+<div class="mermaid">
+sequenceDiagram
+    actor 受害者
+    participant 互联网
+    actor 攻击者（国家级别）
+    participant 量子存储
+    actor 未来量子计算机
+    Note over 受害者,互联网: 2026年 — 今天
+    受害者->>互联网: TLS 1.3（RSA/ECDH 密钥交换）
+    攻击者->>互联网: 被动截获加密流量
+    攻击者->>量子存储: 存储所有密文
+    Note over 量子存储: 等待 10–15 年...
+    Note over 未来量子计算机: ~2035–2040年
+    量子存储->>未来量子计算机: 输入存储的密文
+    未来量子计算机->>攻击者: 破解 ECDH → 解密所有历史流量
+</div>
+
+<h3>7.2 高风险数据类型</h3>
+<ul>
+  <li>🏛️ <strong>政府机密</strong> — 外交电文、军事通信（保密期 25–50 年）</li>
+  <li>🧬 <strong>医疗 / 基因组数据</strong> — 终身隐私</li>
+  <li>📊 <strong>金融交易记录</strong> — 监管要求保存 7–10 年</li>
+  <li>🔑 <strong>长期签名密钥</strong> — 固件签名密钥的有效期可能长达 20 年</li>
+  <li>📦 <strong>知识产权</strong> — 源代码、药物配方、制造工艺</li>
+  <li>🛰️ <strong>卫星通信</strong> — 卫星设计寿命 15–20 年</li>
+</ul>
+
+<!-- ===== 第 8 章 ===== -->
+<h2 id="s8">8. 实施挑战与最佳实践</h2>
+
+<h3>8.1 关键挑战</h3>
+<div class="stat-row">
+  <div class="stat-box" style="border-color:var(--warn)">
+    <div style="font-size:1.2em;color:var(--warn);font-weight:800">📦 大密钥/签名</div>
+    <div class="stat-label">ML-KEM 公钥是 ECDH 的 30 倍<br>SLH-DSA 签名可达 50KB<br>对 TLS/QUIC 带宽有实质影响</div>
+  </div>
+  <div class="stat-box" style="border-color:var(--warn)">
+    <div style="font-size:1.2em;color:var(--warn);font-weight:800">🔀 协议改动</div>
+    <div class="stat-label">TLS 1.3 需要新扩展<br>PKI 证书需要支持 PQC OID<br>HSM 固件需完全重写</div>
+  </div>
+  <div class="stat-box" style="border-color:var(--warn)">
+    <div style="font-size:1.2em;color:var(--warn);font-weight:800">🔄 长尾设备</div>
+    <div class="stat-label">IoT、嵌入式系统<br>可能永远无法升级<br>需提前替换或隔离</div>
+  </div>
+  <div class="stat-box" style="border-color:var(--warn)">
+    <div style="font-size:1.2em;color:var(--warn);font-weight:800">🔬 侧信道</div>
+    <div class="stat-label">格密码的确定性签名<br>对时序/功耗攻击敏感<br>需要常量时间实现</div>
+  </div>
+</div>
+
+<h3>8.2 最佳实践 — 混合模式过渡</h3>
+<div class="card success">
+  <div class="card-title">✅ 推荐策略：传统 + PQC 混合</div>
+  <p>
+    在过渡期（2025–2033）<strong>不要直接切换到纯 PQC</strong>。始终结合传统算法和 PQC 算法：
+  </p>
+  <ul>
+    <li><strong>TLS 1.3</strong>：X25519 + ML-KEM-768 混合密钥交换（如 Chrome 的 X25519Kyber768）</li>
+    <li><strong>签名</strong>：ECDSA + ML-DSA 双签名（任一通过即可）</li>
+    <li><strong>PKI</strong>：混合证书（同一证书中含 ECDSA 签名和 ML-DSA 签名）</li>
+  </ul>
+  <p>这样即使 PQC 算法未来被发现弱点，传统算法仍提供一重保护。</p>
+</div>
+
+<h3>8.3 加密敏捷性（Crypto-Agility）</h3>
+<p>
+核心原则：<strong>系统设计应将加密算法视为可插拔模块</strong>，而非硬编码依赖。具体措施：
+</p>
+<ul>
+  <li>使用抽象密码接口层（如 Tink、liboqs provider for OpenSSL）</li>
+  <li>TLS 证书支持多算法链（Alt-Chain Extensions）</li>
+  <li>密钥管理系统记录每个密钥的算法元数据</li>
+  <li>定期执行 PQC 迁移演练（tabletop exercises）</li>
+  <li>构建自动化密码清单（CBOM — Cryptography Bill of Materials）</li>
+</ul>
+
+<!-- ===== 第 9 章 ===== -->
+<h2 id="s9">9. 建议与行动清单</h2>
+
+<div class="mermaid">
+flowchart TD
+    subgraph 短期["🟡 短期（2025–2026）"]
+        A1["清点所有使用中<br>的非对称加密算法"] --> A2["识别 HNDL<br>高风险数据资产"]
+        A2 --> A3["建立加密敏捷<br>架构基础"]
+    end
+    subgraph 中期["🟠 中期（2026–2028）"]
+        B1["部署 PQC 混合<br>TLS/SSH/IPsec"] --> B2["升级 PKI<br>支持混合证书"]
+        B2 --> B3["HSM 换为<br>支持 PQC 的型号"]
+    end
+    subgraph 长期["🟢 长期（2028–2033）"]
+        C1["全面禁用<br>RSA/ECDH/ECDSA"] --> C2["仅用 PQC<br>在生产环境中"]
+        C2 --> C3["完成长尾<br>设备替换/隔离"]
+    end
+    短期 --> 中期 --> 长期
+    style 短期 fill:#d2992210,stroke:#d29922,color:#d29922
+    style 中期 fill:#f8514910,stroke:#f85149,color:#f85149
+    style 长期 fill:#3fb95010,stroke:#3fb950,color:#3fb950
+</div>
+
+<h3>行动优先级（排序）</h3>
+<ol>
+  <li><strong>清点加密资产</strong> — 你不知道用了什么就无从迁移。扫描所有证书、SSH 密钥、应用密钥。</li>
+  <li><strong>评估 HNDL 风险</strong> — 找出保密期超过 10 年的数据，优先保护。</li>
+  <li><strong>上线混合 TLS</strong> — 在面向公网的服务上启用 X25519Kyber768 或等效方案。</li>
+  <li><strong>升级 OpenSSL/BoringSSL</strong> — 确保使用支持 PQC 的密码库版本。</li>
+  <li><strong>部署 PQC 代码签名</strong> — 固件/IoT 设备优先，因为更新周期最长。</li>
+  <li><strong>培训团队</strong> — 运维、开发、安全团队都需要理解 PQC 带来的变化。</li>
+</ol>
+
+<!-- ===== 参考资料 ===== -->
+<h2 id="refs">📚 参考资料</h2>
+<ol>
+  <li>NIST. <em>FIPS 203: Module-Lattice-Based Key-Encapsulation Mechanism Standard</em>. August 2024. <a href="https://doi.org/10.6028/NIST.FIPS.203">DOI</a></li>
+  <li>NIST. <em>FIPS 204: Module-Lattice-Based Digital Signature Standard</em>. August 2024. <a href="https://doi.org/10.6028/NIST.FIPS.204">DOI</a></li>
+  <li>NIST. <em>FIPS 205: Stateless Hash-Based Digital Signature Standard</em>. August 2024. <a href="https://doi.org/10.6028/NIST.FIPS.205">DOI</a></li>
+  <li>NSA. <em>Announcing the Commercial National Security Algorithm Suite 2.0 (CNSA 2.0)</em>. September 2022.</li>
+  <li>ANSSI (France). <em>Post-Quantum Cryptography: Recommendations for Migration</em>. 2024.</li>
+  <li>BSI (Germany). <em>TR-02102-1: Cryptographic Mechanisms — Recommendations and Key Lengths</em>. 2025.</li>
+  <li>ETSI TC CYBER. <em>TR 103 964: Quantum-Safe Cryptography — Migration Strategies</em>. 2024.</li>
+  <li>Cloudflare. <em>The Post-Quantum Internet: 2025 Year in Review</em>. 2025.</li>
+  <li>Google Security Blog. <em>Chrome's Post-Quantum TLS: One Year Later</em>. 2024.</li>
+  <li>Apple Security Engineering. <em>iMessage with PQ3: The Next Generation of Messaging Security</em>. February 2024.</li>
+  <li>Signal Foundation. <em>The PQXDH Key Agreement Protocol</em>. September 2023.</li>
+  <li>Mosca, M. <em>Cybersecurity in an Era with Quantum Computers: Are We Ready?</em> IEEE Security &amp; Privacy, 2018.</li>
+  <li>OMB Memorandum M-23-02. <em>Migrating to Post-Quantum Cryptography</em>. November 2022.</li>
+</ol>
+
+<div class="footnotes">
+  <p><strong>免责声明：</strong>本报告基于公开发表的学术论文、标准文档和政府公告编撰，仅供信息参考。关于具体系统的 PQC 迁移决策，请咨询合格的安全专家和密码工程师。</p>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#58a6ff',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#8b949e',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#161b22',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      secondBkg: '#161b22',
+      textColor: '#e6edf3',
+      fontSize: '14px'
+    },
+    gantt: { titleTopMargin: 25, barHeight: 20, barGap: 4, topPadding: 50 },
+    timeline: { disableMulticolor: true }
+  });
+</script>
+
+</body>
+</html>

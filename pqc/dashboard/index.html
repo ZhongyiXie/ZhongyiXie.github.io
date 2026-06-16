@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC 战略驾驶仓 — 全球抗量子密码态势感知平台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap');
+
+  :root {
+    --bg-deep: #0a0e17;
+    --bg-panel: #111827;
+    --bg-card: #161c28;
+    --border: #1e2d45;
+    --border-active: #2e4a6f;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #06b6d4;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-yellow: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-orange: #f97316;
+    --accent-pink: #ec4899;
+    --glow-cyan: 0 0 20px rgba(6,182,212,0.3);
+    --glow-red: 0 0 20px rgba(239,68,68,0.3);
+    --glow-green: 0 0 20px rgba(16,185,129,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(30,45,69,0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,45,69,0.15) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === HEADER === */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(17,24,39,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: var(--glow-cyan);
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-center {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .threat-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .threat-badge.elevated {
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--accent-yellow);
+  }
+  .threat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-yellow);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 4px var(--accent-yellow); }
+    50% { box-shadow: 0 0 14px var(--accent-yellow), 0 0 28px rgba(245,158,11,0.4); }
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .header-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent-cyan);
+  }
+
+  /* === LAYOUT === */
+  .app-container {
+    display: flex;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+    height: calc(100vh - 56px);
+    position: sticky;
+    top: 56px;
+    background: rgba(17,24,39,0.6);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .nav-item:hover {
+    background: rgba(30,45,69,0.4);
+    color: var(--text-primary);
+  }
+  .nav-item.active {
+    background: rgba(6,182,212,0.1);
+    border-color: rgba(6,182,212,0.25);
+    color: var(--accent-cyan);
+    box-shadow: inset 0 0 12px rgba(6,182,212,0.06);
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px;
+    background: var(--accent-red);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* === MAIN CONTENT === */
+  .main-content {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  /* Section header */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* === GRID LAYOUTS === */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+
+  /* === CARD === */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: var(--border-active); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon { font-size: 16px; }
+  .card-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge-live { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-alert { background: rgba(239,68,68,0.15); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.3); }
+  .badge-info { background: rgba(59,130,246,0.15); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.3); }
+
+  .card-full { grid-column: 1 / -1; }
+
+  /* === METRIC TILES === */
+  .metric-row {
+    display: flex;
+    gap: 12px;
+  }
+  .metric-tile {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .metric-trend {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .trend-up { color: var(--accent-red); }
+  .trend-down { color: var(--accent-green); }
+
+  /* === CHART CONTAINER === */
+  .chart-wrap {
+    position: relative;
+    height: 200px;
+  }
+  .chart-wrap.tall { height: 260px; }
+  .chart-wrap.short { height: 160px; }
+
+  /* === MAP PLACEHOLDER === */
+  .geo-map {
+    height: 280px;
+    background: var(--bg-panel);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .geo-map-inner {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .geo-dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    animation: geo-pulse 3s infinite;
+  }
+  @keyframes geo-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(2.5); opacity: 0.2; }
+  }
+  .geo-label {
+    position: absolute;
+    font-size: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* === COMPLIANCE MATRIX === */
+  .compliance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .compliance-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: var(--bg-panel);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .compliance-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    font-size: 12px;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .status-critical { background: var(--accent-red); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+  .status-warning { background: var(--accent-yellow); box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+  .status-ok { background: var(--accent-green); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+  .status-pending { background: var(--text-muted); }
+
+  /* === COUNTDOWN === */
+  .countdown-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .countdown-item {
+    flex: 1;
+    min-width: 140px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .countdown-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .countdown-days {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .countdown-days.urgent { color: var(--accent-red); }
+  .countdown-days.warning { color: var(--accent-orange); }
+  .countdown-days.normal { color: var(--accent-cyan); }
+  .countdown-bar {
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 6px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .countdown-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s;
+  }
+
+  /* === TIMELINE === */
+  .timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .timeline-item {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--bg-panel);
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .timeline-item:hover { border-color: var(--border-active); }
+  .timeline-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent-cyan);
+    white-space: nowrap;
+    min-width: 68px;
+    padding-top: 1px;
+  }
+  .timeline-tag {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    height: fit-content;
+  }
+  .tag-us { background: rgba(59,130,246,0.2); color: var(--accent-blue); }
+  .tag-cn { background: rgba(239,68,68,0.2); color: var(--accent-red); }
+  .tag-eu { background: rgba(139,92,246,0.2); color: var(--accent-purple); }
+  .tag-global { background: rgba(16,185,129,0.2); color: var(--accent-green); }
+  .tag-quantum { background: rgba(249,115,22,0.2); color: var(--accent-orange); }
+
+  /* === TECH RADAR === */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .tech-item {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .tech-name {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .tech-status {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: 500;
+  }
+  .ts-production { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+  .ts-draft { background: rgba(245,158,11,0.15); color: var(--accent-yellow); }
+  .ts-research { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-active); }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1200px) {
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .header { padding: 0 12px; }
+    .main-content { padding: 12px; }
+    .countdown-row { flex-direction: column; }
+  }
+
+  /* === TABS === */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 12px;
+    background: var(--bg-panel);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .tab {
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text-primary); }
+  .tab.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon">Ψ</div>
+      <div>
+        <div>PQC Sentinel</div>
+        <div class="logo-sub">Strategic Cockpit</div>
+      </div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="threat-badge elevated">
+      <span class="threat-dot"></span> 威胁等级：ELEVATED · 上升中
+    </div>
+  </div>
+  <div class="header-right">
+    <span>数据更新</span>
+    <span class="header-time" id="liveTime">--</span>
+    <span style="font-size:10px;opacity:0.5;">UTC+8</span>
+  </div>
+</header>
+
+<!-- ===== APP CONTAINER ===== -->
+<div class="app-container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-panel="radar">
+        <span class="nav-icon">🌍</span> 全球态势地图
+      </div>
+      <div class="nav-item" data-panel="threat">
+        <span class="nav-icon">⚡</span> 威胁情报
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" data-panel="migration">
+        <span class="nav-icon">🏗️</span> 迁移成熟度
+      </div>
+      <div class="nav-item" data-panel="tech">
+        <span class="nav-icon">🔬</span> 技术雷达
+      </div>
+      <div class="nav-item" data-panel="compliance">
+        <span class="nav-icon">📋</span> 合规追踪
+      </div>
+      <div class="nav-item" data-panel="market">
+        <span class="nav-icon">💼</span> 市场情报
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      PQC Sentinel v0.1-alpha<br>
+      © 2026 Strategic Cockpit
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="dashboard">
+
+    <!-- ===== ROW 1: 全球态势地图 + 威胁情报 ===== -->
+    <div class="grid-2">
+
+      <!-- 全球态势地图 -->
+      <div class="card" style="min-height:380px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🌍</span> 全球 PQC 态势实时地图</div>
+          <span class="card-badge badge-live">LIVE</span>
+        </div>
+        <div class="tabs">
+          <div class="tab active">标准进程</div>
+          <div class="tab">政策法规</div>
+          <div class="tab">量子计算</div>
+        </div>
+        <div class="geo-map">
+          <div class="geo-map-inner" id="geoMap">
+            <!-- Dots injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 威胁情报仪表盘 -->
+      <div class="card" style="min-height:380px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">⚡</span> 量子威胁实时指数</div>
+          <span class="card-badge badge-alert">⚠ Q-Day 时钟</span>
+        </div>
+        <div class="metric-row" style="margin-bottom:12px;">
+          <div class="metric-tile">
+            <div class="metric-value" style="color:var(--accent-yellow);">ELEVATED</div>
+            <div class="metric-label">当前威胁等级</div>
+            <div class="metric-trend trend-up">↗ 过去90天：+3次重大突破</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-value" style="color:var(--accent-cyan);">~1,220</div>
+            <div class="metric-label">最强量子比特数 (IBM Condor)</div>
+            <div class="metric-trend trend-up">↗ 年增长率 47%</div>
+          </div>
+        </div>
+        <div class="chart-wrap short">
+          <canvas id="chartQubitGrowth"></canvas>
+        </div>
+        <div style="margin-top:10px; font-size:11px; color:var(--text-muted); text-align:center;">
+          📊 全球超导量子比特数年度增长 · 2026预测突破 2,000 物理量子比特
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ROW 2: 政策倒计时 + 迁移成熟度 ===== -->
+    <div class="grid-2">
+
+      <!-- 全球政策倒计时时钟 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">⏰</span> 全球政策倒计时时钟</div>
+          <span class="card-badge badge-alert">DEADLINE WATCH</span>
+        </div>
+        <div class="countdown-row">
+          <div class="countdown-item">
+            <div class="countdown-label">🇺🇸 美国国防承包商 PQC 强制合规</div>
+            <div class="countdown-days urgent" id="cd-us-defense">--</div>
+            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:65%;background:var(--accent-red);"></div></div>
+          </div>
+          <div class="countdown-item">
+            <div class="countdown-label">🇨🇳 关基商密规定落实大限</div>
+            <div class="countdown-days warning" id="cd-cn-critical">--</div>
+            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:40%;background:var(--accent-orange);"></div></div>
+          </div>
+          <div class="countdown-item">
+            <div class="countdown-label">🇺🇸 NIST 112位安全强度算法废弃</div>
+            <div class="countdown-days normal" id="cd-nist-deprecate">--</div>
+            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:25%;background:var(--accent-cyan);"></div></div>
+          </div>
+          <div class="countdown-item">
+            <div class="countdown-label">🇪🇺 EU DORA 密码敏捷性合规</div>
+            <div class="countdown-days warning" id="cd-eu-dora">--</div>
+            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:18%;background:var(--accent-orange);"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 迁移成熟度仪表盘 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🏗️</span> 全球 PQC 迁移成熟度指数（按行业）</div>
+          <span class="card-badge badge-info">2026 Q2</span>
+        </div>
+        <div class="chart-wrap short">
+          <canvas id="chartMaturity"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ROW 3: 全球合规矩阵 + 技术雷达 ===== -->
+    <div class="grid-2">
+
+      <!-- 合规矩阵 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📋</span> 全球 PQC 合规要求矩阵</div>
+          <span class="card-badge badge-info">按行业×地区</span>
+        </div>
+        <table class="compliance-table">
+          <thead>
+            <tr>
+              <th>行业</th>
+              <th>🇺🇸 美国</th>
+              <th>🇪🇺 欧盟</th>
+              <th>🇨🇳 中国</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>金融</strong></td>
+              <td>2035 强制</td>
+              <td>2035 (DORA)</td>
+              <td>2030 建议</td>
+              <td><span class="status-dot status-critical"></span> 紧迫</td>
+            </tr>
+            <tr>
+              <td><strong>国防</strong></td>
+              <td>2027 (NSA)</td>
+              <td>-</td>
+              <td>-</td>
+              <td><span class="status-dot status-critical"></span> 极度紧迫</td>
+            </tr>
+            <tr>
+              <td><strong>政府</strong></td>
+              <td>2035 (NSM-10)</td>
+              <td>2035</td>
+              <td>2035 建议</td>
+              <td><span class="status-dot status-warning"></span> 推进中</td>
+            </tr>
+            <tr>
+              <td><strong>关键基础设施</strong></td>
+              <td>2035</td>
+              <td>2033</td>
+              <td>2030</td>
+              <td><span class="status-dot status-warning"></span> 推进中</td>
+            </tr>
+            <tr>
+              <td><strong>电信</strong></td>
+              <td>2035</td>
+              <td>2033 (ETSI)</td>
+              <td>2035</td>
+              <td><span class="status-dot status-ok"></span> 规划中</td>
+            </tr>
+            <tr>
+              <td><strong>医疗</strong></td>
+              <td>2035</td>
+              <td>2035</td>
+              <td>-</td>
+              <td><span class="status-dot status-pending"></span> 待启动</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 技术雷达 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🔬</span> PQC 算法生态实时雷达</div>
+          <span class="card-badge badge-live">TRACKING</span>
+        </div>
+        <div class="chart-wrap short">
+          <canvas id="chartTechRadar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ROW 4: 全球事件时间线 + 市场情报 ===== -->
+    <div class="grid-2">
+
+      <!-- 事件时间线 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📰</span> 全球 PQC 重大事件时间线</div>
+          <span class="card-badge badge-live">实时追踪</span>
+        </div>
+        <div class="timeline-list">
+          <div class="timeline-item">
+            <span class="timeline-date">2026-06-01</span>
+            <span class="timeline-tag tag-cn">中国</span>
+            <span>商密标准化研究院第二轮PQC算法征集截止，收到47个候选算法</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-05-15</span>
+            <span class="timeline-tag tag-quantum">突破</span>
+            <span>Oratomic 理论突破：Shor算法所需物理量子比特降至~10,000</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-05-04</span>
+            <span class="timeline-tag tag-eu">EU</span>
+            <span>EuroHPC 部署 Euro-Q-Exa 量子计算机，强化欧洲量子主权</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-04-18</span>
+            <span class="timeline-tag tag-us">美国</span>
+            <span>NIST 发布 FIPS 206 (FN-DSA/FALCON) 最终标准草案</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-03-22</span>
+            <span class="timeline-tag tag-global">G7</span>
+            <span>G7 网络专家组将PQC迁移纳入2026年联合行动优先事项</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-03-05</span>
+            <span class="timeline-tag tag-cn">中国</span>
+            <span>王小云两会发言：中国正研发无结构格自主算法，预计3年内完成标准</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-02-20</span>
+            <span class="timeline-tag tag-us">美国</span>
+            <span>新版《国家网络战略》：量子安全加密提升为国家安全核心支柱</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-date">2026-01-12</span>
+            <span class="timeline-tag tag-eu">EU</span>
+            <span>汇丰完成全球首个 PQC+QKD 双栈防御生产级部署</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 市场情报 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">💼</span> PQC 市场情报与产业链</div>
+          <span class="card-badge badge-info">2026 Forecast</span>
+        </div>
+        <div class="metric-row" style="margin-bottom:12px;">
+          <div class="metric-tile">
+            <div class="metric-value" style="color:var(--accent-purple);">$6.2B</div>
+            <div class="metric-label">全球市场规模 (2026E)</div>
+            <div class="metric-trend trend-up">CAGR 38% (2025-2030)</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-value" style="color:var(--accent-cyan);">47</div>
+            <div class="metric-label">PQC 创业公司融资事件 (2026)</div>
+            <div class="metric-trend trend-up">↗ +156% YoY</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-value" style="color:var(--accent-green);">12,400+</div>
+            <div class="metric-label">全球 PQC 相关职位 (2026Q2)</div>
+            <div class="metric-trend trend-up">↗ 需求增长 89%</div>
+          </div>
+        </div>
+        <div class="chart-wrap short">
+          <canvas id="chartMarket"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ROW 5: PQC自评工具入口 ===== -->
+    <div class="card" style="background:linear-gradient(135deg, rgba(6,182,212,0.08), rgba(139,92,246,0.08)); border-color:rgba(6,182,212,0.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px;">🔍 PQC 组织自评引擎</div>
+          <div style="font-size:12px;color:var(--text-secondary);">
+            输入行业、系统数量、当前加密体系、合规要求 → 自动生成迁移紧迫度评分 + 分阶段路线图 + 预算估算 + 供应商推荐
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button style="padding:10px 24px;background:var(--accent-cyan);color:#000;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">
+            🚀 立即自评
+          </button>
+          <button style="padding:10px 20px;background:transparent;color:var(--text-primary);border:1px solid var(--border-active);border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+            📄 下载案例报告
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ==================== LIVE CLOCK ====================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('liveTime').textContent =
+    now.toLocaleString('zh-CN', { hour12: false });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ==================== COUNTDOWN CLOCKS ====================
+function calcDays(targetDate) {
+  const now = new Date();
+  const diff = targetDate - now;
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
+document.getElementById('cd-us-defense').textContent =
+  calcDays(new Date('2027-01-01')).toLocaleString() + ' 天';
+document.getElementById('cd-cn-critical').textContent =
+  calcDays(new Date('2030-08-01')).toLocaleString() + ' 天';
+document.getElementById('cd-nist-deprecate').textContent =
+  calcDays(new Date('2030-01-01')).toLocaleString() + ' 天';
+document.getElementById('cd-eu-dora').textContent =
+  calcDays(new Date('2033-01-17')).toLocaleString() + ' 天';
+
+// ==================== GEO MAP DOTS ====================
+const geoDots = [
+  { x: 22, y: 38, label: '🇺🇸 NIST FIPS 203-206', r: 'us' },
+  { x: 23, y: 48, label: '🇺🇸 NSA CNSA 2.0', r: 'us' },
+  { x: 48, y: 32, label: '🇪🇺 ENISA Roadmap', r: 'eu' },
+  { x: 47, y: 38, label: '🇫🇷 ANSSI', r: 'eu' },
+  { x: 49, y: 35, label: '🇩🇪 BSI', r: 'eu' },
+  { x: 46, y: 40, label: '🇬🇧 NCSC 2035', r: 'eu' },
+  { x: 73, y: 42, label: '🇨🇳 商密PQC竞赛', r: 'cn' },
+  { x: 74, y: 50, label: '🇨🇳 关基商密规定', r: 'cn' },
+  { x: 77, y: 41, label: '🇰🇷 KPQC 2035', r: 'asia' },
+  { x: 81, y: 38, label: '🇯🇵 CRYPTREC', r: 'asia' },
+  { x: 40, y: 65, label: '🇦🇺 ASD 2030', r: 'asia' },
+  { x: 30, y: 55, label: '🇨🇦 CFDIR', r: 'us' },
+  { x: 55, y: 55, label: '🇸🇬 MAS Advisory', r: 'asia' },
+];
+const mapEl = document.getElementById('geoMap');
+// Draw simplified world map outline labels
+geoDots.forEach(d => {
+  const dot = document.createElement('div');
+  dot.className = 'geo-dot';
+  dot.style.left = d.x + '%';
+  dot.style.top = d.y + '%';
+  dot.style.background = d.r === 'us' ? 'var(--accent-blue)' :
+    d.r === 'eu' ? 'var(--accent-purple)' :
+    d.r === 'cn' ? 'var(--accent-red)' : 'var(--accent-cyan)';
+  mapEl.appendChild(dot);
+
+  const label = document.createElement('div');
+  label.className = 'geo-label';
+  label.style.left = (d.x + 2) + '%';
+  label.style.top = (d.y - 4) + '%';
+  label.textContent = d.label;
+  mapEl.appendChild(label);
+});
+
+// ==================== CHARTS ====================
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(30,45,69,0.5)';
+Chart.defaults.font.family = "'Noto Sans SC','JetBrains Mono',sans-serif";
+Chart.defaults.font.size = 10;
+
+// --- Chart: Qubit Growth ---
+new Chart(document.getElementById('chartQubitGrowth'), {
+  type: 'line',
+  data: {
+    labels: ['2019','2020','2021','2022','2023','2024','2025','2026E'],
+    datasets: [
+      { label: 'IBM', data: [53,65,127,433,1121,1121,1220,1800], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true },
+      { label: 'Google', data: [53,54,54,54,70,105,105,1500], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true },
+      { label: 'IonQ', data: [11,22,32,32,35,36,36,64], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.3, fill: true },
+      { label: '中国 (祖冲之)', data: [12,24,56,66,105,105,105,200], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3, fill: true, borderDash: [4,2] },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { type: 'logarithmic', title: { display: true, text: '量子比特 (log)' }, grid: { color: 'rgba(30,45,69,0.3)' } },
+      x: { grid: { display: false } }
+    },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 9 } } } }
+  }
+});
+
+// --- Chart: Migration Maturity ---
+new Chart(document.getElementById('chartMaturity'), {
+  type: 'bar',
+  data: {
+    labels: ['金融', '政府', '电信', '能源', '制造业', '医疗', '中小企业'],
+    datasets: [{
+      label: '就绪度 %',
+      data: [78, 62, 41, 38, 33, 28, 12],
+      backgroundColor: [
+        'rgba(16,185,129,0.7)',
+        'rgba(59,130,246,0.7)',
+        'rgba(245,158,11,0.7)',
+        'rgba(245,158,11,0.7)',
+        'rgba(249,115,22,0.7)',
+        'rgba(239,68,68,0.7)',
+        'rgba(239,68,68,0.5)',
+      ],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    scales: {
+      x: { max: 100, grid: { color: 'rgba(30,45,69,0.3)' }, title: { display: true, text: '%' } },
+      y: { grid: { display: false } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// --- Chart: Tech Radar (Bubble) ---
+new Chart(document.getElementById('chartTechRadar'), {
+  type: 'bubble',
+  data: {
+    datasets: [
+      { label: 'NIST 标准', data: [
+        { x: 9, y: 8, r: 18, name: 'ML-KEM (FIPS 203)' },
+        { x: 8, y: 7, r: 16, name: 'ML-DSA (FIPS 204)' },
+        { x: 7, y: 9, r: 14, name: 'SLH-DSA (FIPS 205)' },
+        { x: 6, y: 6, r: 12, name: 'FN-DSA (FIPS 206)' },
+        { x: 4, y: 5, r: 10, name: 'HQC (备选)' },
+      ], backgroundColor: 'rgba(59,130,246,0.5)', borderColor: '#3b82f6' },
+      { label: '中国竞赛', data: [
+        { x: 7, y: 6, r: 13, name: 'Aigis-enc' },
+        { x: 6, y: 5, r: 12, name: 'Aigis-sig' },
+        { x: 5, y: 4, r: 8, name: 'LAC.PKE' },
+      ], backgroundColor: 'rgba(239,68,68,0.5)', borderColor: '#ef4444' },
+      { label: '开源库', data: [
+        { x: 8, y: 9, r: 14, name: 'liboqs' },
+        { x: 7, y: 8, r: 12, name: 'OQS Provider' },
+        { x: 6, y: 7, r: 10, name: 'Bouncy Castle' },
+      ], backgroundColor: 'rgba(16,185,129,0.5)', borderColor: '#10b981' },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { title: { display: true, text: '成熟度 →' }, min: 2, max: 11, grid: { color: 'rgba(30,45,69,0.3)' } },
+      y: { title: { display: true, text: '安全性 →' }, min: 2, max: 11, grid: { color: 'rgba(30,45,69,0.3)' } }
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 9 } } },
+      tooltip: { callbacks: { label: ctx => ctx.raw.name } }
+    }
+  }
+});
+
+// --- Chart: Market Growth ---
+new Chart(document.getElementById('chartMarket'), {
+  type: 'bar',
+  data: {
+    labels: ['2023', '2024', '2025', '2026E', '2027E', '2028E', '2029E', '2030E'],
+    datasets: [
+      { label: '全球 PQC 市场 (十亿美元)', data: [0.8, 1.9, 3.8, 6.2, 9.5, 14.0, 20.5, 28.0], backgroundColor: 'rgba(139,92,246,0.6)', borderRadius: 4 },
+      { label: '中国 PQC 市场 (十亿美元)', data: [0.05, 0.15, 0.45, 1.1, 2.0, 3.5, 5.5, 8.0], backgroundColor: 'rgba(239,68,68,0.5)', borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { grid: { color: 'rgba(30,45,69,0.3)' }, title: { display: true, text: '十亿美元' } },
+      x: { grid: { display: false } }
+    },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 9 } } } }
+  }
+});
+
+// ==================== SIDEBAR NAVIGATION ====================
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    // Scroll to section - smooth
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// ==================== TAB SWITCHING ====================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    const parent = this.parentElement;
+    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+console.log('%c🚀 PQC Sentinel Strategic Cockpit %cv0.1-alpha',
+  'font-size:16px;font-weight:bold;color:#06b6d4;',
+  'color:#64748b;');
+console.log('%c全球抗量子密码态势感知与决策支持平台',
+  'color:#94a3b8;font-size:11px;');
+console.log('%c6 Modules · Live Data · Strategic Intelligence',
+  'color:#94a3b8;font-size:10px;');
+</script>
+
+</body>
+</html>

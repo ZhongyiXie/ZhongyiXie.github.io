@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC 战略驾驶仓 — 概念设计</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #06b6d4;
+    --accent2: #8b5cf6;
+    --accent3: #3b82f6;
+    --red: #ef4444;
+    --orange: #f97316;
+    --yellow: #f59e0b;
+    --green: #10b981;
+    --pink: #ec4899;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ========== HERO ========== */
+  .hero {
+    background: linear-gradient(160deg, #0a0e17 0%, #111827 40%, #1a1040 100%);
+    color: #fff;
+    padding: 80px 24px 64px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(6,182,212,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6,182,212,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(6,182,212,0.12);
+    border: 1px solid rgba(6,182,212,0.3);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    position: relative;
+    background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero .subtitle {
+    font-size: 18px;
+    color: #94a3b8;
+    max-width: 720px;
+    margin: 0 auto;
+    position: relative;
+    font-weight: 400;
+  }
+  .hero .tagline {
+    margin-top: 24px;
+    font-size: 14px;
+    color: #64748b;
+    position: relative;
+  }
+
+  /* ========== CONTAINER ========== */
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ========== SECTION ========== */
+  .section {
+    padding: 56px 0;
+  }
+  .section + .section {
+    border-top: 1px solid var(--border);
+  }
+  .section-header {
+    margin-bottom: 32px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 4px 0 8px;
+    color: var(--text);
+  }
+  .section-desc {
+    font-size: 15px;
+    color: var(--text-secondary);
+    max-width: 640px;
+  }
+
+  /* ========== HIGHLIGHT BOX ========== */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(6,182,212,0.04), rgba(139,92,246,0.04));
+    border: 1px solid rgba(6,182,212,0.2);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+  .highlight-box strong {
+    color: var(--accent);
+  }
+
+  /* ========== USER TIERS ========== */
+  .tier-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .tier-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .tier-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    transform: translateY(-2px);
+  }
+  .tier-icon { font-size: 32px; margin-bottom: 8px; }
+  .tier-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .tier-role { font-size: 12px; color: var(--text-muted); }
+  .tier-need { font-size: 12px; color: var(--text-secondary); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+  /* ========== MODULE CARDS ========== */
+  .module-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .module-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .module-card:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .module-head {
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .mi-1 { background: rgba(6,182,212,0.1); }
+  .mi-2 { background: rgba(239,68,68,0.1); }
+  .mi-3 { background: rgba(16,185,129,0.1); }
+  .mi-4 { background: rgba(139,92,246,0.1); }
+  .mi-5 { background: rgba(59,130,246,0.1); }
+  .mi-6 { background: rgba(249,115,22,0.1); }
+
+  .module-title {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .module-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .module-body {
+    padding: 20px 24px;
+  }
+  .module-body h5 {
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 16px 0 8px;
+  }
+  .module-body h5:first-child { margin-top: 0; }
+  .module-body ul {
+    list-style: none;
+    padding: 0;
+  }
+  .module-body ul li {
+    font-size: 14px;
+    padding: 4px 0;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: 18px;
+  }
+  .module-body ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10px;
+    top: 6px;
+  }
+
+  /* Console panel */
+  .console-panel {
+    background: #0a0e17;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #94a3b8;
+    margin: 16px 0;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+  }
+  .console-panel .prompt { color: var(--accent); }
+  .console-panel .highlight { color: var(--accent2); }
+  .console-panel .dim { color: #475569; }
+
+  /* ========== KILLER FEATURES ========== */
+  .killer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .killer-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .killer-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, transparent 50%, rgba(6,182,212,0.04) 50%);
+    border-radius: 0 10px 0 0;
+  }
+  .killer-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 40px;
+    font-weight: 900;
+    color: rgba(6,182,212,0.15);
+    line-height: 1;
+    margin-bottom: -8px;
+  }
+  .killer-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 8px 0;
+  }
+  .killer-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .killer-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  .kt-green { background: rgba(16,185,129,0.1); color: var(--green); }
+  .kt-purple { background: rgba(139,92,246,0.1); color: var(--accent2); }
+  .kt-red { background: rgba(239,68,68,0.1); color: var(--red); }
+
+  /* ========== BUSINESS MODEL TABLE ========== */
+  .biz-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 16px 0;
+  }
+  .biz-table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+  }
+  .biz-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .biz-table .tier-label {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .tier-free { background: #e2e8f0; color: #475569; }
+  .tier-pro { background: rgba(6,182,212,0.1); color: #0891b2; }
+  .tier-ent { background: rgba(139,92,246,0.1); color: #7c3aed; }
+
+  /* ========== TECH STACK ========== */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .stack-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .stack-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .stack-label.frontend { background: var(--accent3); }
+  .stack-label.backend { background: var(--accent2); }
+  .stack-label.data { background: var(--orange); }
+  .stack-label.infra { background: var(--green); }
+  .stack-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* ========== LAUNCH STEPS ========== */
+  .step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    counter-reset: steps;
+  }
+  .step-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+  .step-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-content h5 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: var(--text-secondary); }
+
+  /* ========== ADVANTAGE BOX ========== */
+  .advantage-box {
+    background: linear-gradient(135deg, #0a0e17, #1a1040);
+    border-radius: 14px;
+    padding: 32px;
+    color: #e2e8f0;
+    margin: 24px 0;
+  }
+  .advantage-box h4 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  .advantage-box ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .advantage-box ul li {
+    font-size: 14px;
+    padding-left: 24px;
+    position: relative;
+    color: #cbd5e1;
+  }
+  .advantage-box ul li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ========== NEXT STEPS ========== */
+  .next-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .next-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .next-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .next-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .next-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ========== FOOTER ========== */
+  .footer {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 768px) {
+    .tier-grid, .killer-grid, .next-grid { grid-template-columns: 1fr; }
+    .stack-grid { grid-template-columns: 1fr; }
+    .hero { padding: 48px 16px 40px; }
+    .section { padding: 36px 0; }
+  }
+
+  /* ========== PRINT ========== */
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .hero { background: #fff; color: #000; padding: 24px 0; }
+    .hero h1 { background: none; -webkit-text-fill-color: #000; }
+    .container { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ====== HERO ====== -->
+<header class="hero">
+  <div class="hero-badge">CONCEPT DESIGN · v1.0</div>
+  <h1>PQC 战略驾驶仓</h1>
+  <p class="subtitle">
+    全球抗量子密码态势感知与决策支持平台<br>
+    让决策者"一屏看清全局、一键评估风险、一步制定路线图"
+  </p>
+  <p class="tagline">不是新闻聚合器，不是技术博客，是决策工具。</p>
+</header>
+
+<!-- ====== POSITIONING ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <h2 class="section-title">核心定位</h2>
+      <p class="section-desc">
+        PQC 领域目前信息极度分散、时效性极强、决策复杂度高——而市面上没有一个真正意义上的战略驾驶仓产品。
+      </p>
+    </div>
+
+    <div class="highlight-box">
+      <strong>一句话定位：</strong>全球抗量子密码态势感知与决策支持平台，让政府/金融机构/大型企业的安全决策者"一屏看清全局、一键评估风险、一步制定路线图"。
+    </div>
+
+    <h3 style="margin: 28px 0 16px; font-size: 16px;">目标用户画像（三层）</h3>
+    <div class="tier-grid">
+      <div class="tier-card">
+        <div class="tier-icon">🧭</div>
+        <div class="tier-name">决策层</div>
+        <div class="tier-role">CIO / CISO / CTO<br>政府信息化负责人</div>
+        <div class="tier-need">"我们什么时候动手？<br>花多少钱？先做哪里？"</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-icon">⚙️</div>
+        <div class="tier-name">执行层</div>
+        <div class="tier-role">安全架构师 / 合规负责人<br>密码系统工程师</div>
+        <div class="tier-need">"具体选哪个算法？<br>怎么迁移？供应商谁靠谱？"</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-icon">🔍</div>
+        <div class="tier-name">情报层</div>
+        <div class="tier-role">政策研究者 / 行业分析师<br>投资人</div>
+        <div class="tier-need">"全球格局在发生什么？<br>谁在领跑？机会在哪？"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SIX MODULES ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <h2 class="section-title">六大仪表盘模块</h2>
+      <p class="section-desc">覆盖态势感知、威胁情报、迁移评估、技术选型、合规追踪、市场情报的全维度驾驶仓。</p>
+    </div>
+
+    <div class="module-grid">
+
+      <!-- Module 1 -->
+      <div class="module-card">
+        <div class="module-head">
+          <div class="module-icon mi-1">🌍</div>
+          <div>
+            <div class="module-title">模块一：全球态势地图</div>
+            <div class="module-subtitle">Geopolitical Radar</div>
+          </div>
+        </div>
+        <div class="module-body">
+          <div class="console-panel">
+            <span class="dim">┌─────────────────────────────────────────┐</span><br>
+            <span class="dim">│</span>  <span class="highlight">🌍 全球 PQC 态势实时地图</span>                <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 各国标准进程热力图（NIST/ENISA/中国）  <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 关键政策时间线（立法/法规/强制迁移节点）<span class="dim">│</span><br>
+            <span class="dim">│</span>  • 跨国对比：中美欧俄日韩进展对比          <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 事件时间轴（翻转卡片式）               <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  <span class="prompt">[按国家筛选]</span> <span class="prompt">[按政策类型筛选]</span> <span class="prompt">[时间线视图]</span> <span class="dim">│</span><br>
+            <span class="dim">└─────────────────────────────────────────┘</span>
+          </div>
+          <h5>数据源</h5>
+          <ul>
+            <li>官方公告抓取、标准组织 RSS、政府网站监控、政策文件库</li>
+          </ul>
+          <h5>亮点功能</h5>
+          <ul>
+            <li><strong>政策倒计时时钟</strong> — 各行业强制迁移 deadline 可视化倒计时，红色预警即将到期的节点</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Module 2 -->
+      <div class="module-card">
+        <div class="module-head">
+          <div class="module-icon mi-2">⚡</div>
+          <div>
+            <div class="module-title">模块二：威胁情报仪表盘</div>
+            <div class="module-subtitle">Threat Intelligence</div>
+          </div>
+        </div>
+        <div class="module-body">
+          <div class="console-panel">
+            <span class="dim">┌─────────────────────────────────────────┐</span><br>
+            <span class="dim">│</span>  <span class="highlight">⚡ 量子威胁实时指数</span>                      <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  • Q-Day 预测时钟（多家机构预测加权）      <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 量子计算最新突破追踪                   <span class="dim">│</span><br>
+            <span class="dim">│</span>  • HNDL 攻击活动监测（按行业/地区）        <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 经典密码体系脆弱性评估（RSA/ECC剩余寿命）<span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  当前威胁等级：<span style="color:#f59e0b;">🟡 ELEVATED</span>                <span class="dim">│</span><br>
+            <span class="dim">│</span>  趋势：↗ 上升（过去90天：3次重大突破）     <span class="dim">│</span><br>
+            <span class="dim">└─────────────────────────────────────────┘</span>
+          </div>
+          <h5>核心指标</h5>
+          <ul>
+            <li><strong>量子比特数追踪器</strong>：IBM/Google/IonQ/中国量子计算机 — 物理量子比特数实时追踪</li>
+            <li><strong>Shor 算法等效破解力</strong>：当前最强量子计算机能破解多少位的 RSA</li>
+            <li><strong>HNDL 暴露指数</strong>：你的组织数据已被收集并在未来会被破解的概率</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Module 3 -->
+      <div class="module-card">
+        <div class="module-head">
+          <div class="module-icon mi-3">🏗️</div>
+          <div>
+            <div class="module-title">模块三：迁移成熟度仪表盘</div>
+            <div class="module-subtitle">Migration Readiness</div>
+          </div>
+        </div>
+        <div class="module-body">
+          <div class="console-panel">
+            <span class="dim">┌─────────────────────────────────────────┐</span><br>
+            <span class="dim">│</span>  <span class="highlight">🏗️ 全球 PQC 迁移成熟度指数</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  行业就绪度对比：                         <span class="dim">│</span><br>
+            <span class="dim">│</span>  ████████░░ 金融业     <span style="color:#10b981;">78%</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>  ██████░░░░ 政府       <span style="color:#3b82f6;">62%</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>  ████░░░░░░ 电信       <span style="color:#f59e0b;">41%</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>  ███░░░░░░░ 制造业     <span style="color:#f97316;">33%</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>  ██░░░░░░░░ 医疗       <span style="color:#ef4444;">28%</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>  █░░░░░░░░░ 中小企业   <span style="color:#ef4444;">12%</span>              <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  <span class="prompt">[企业自评工具 → 生成迁移成熟度报告]</span>       <span class="dim">│</span><br>
+            <span class="dim">└─────────────────────────────────────────┘</span>
+          </div>
+          <h5>核心功能</h5>
+          <ul>
+            <li><strong>PQC 成熟度自评工具</strong>：用户输入组织信息 → 自动生成成熟度评分 + 差距分析 + 建议路线图</li>
+            <li><strong>同行对标</strong>：你的行业、同等规模的企业做到哪一步了？</li>
+            <li><strong>合规差距分析</strong>：对标国密/等保/密评/CNSA 2.0/DORA 等标准</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Module 4 -->
+      <div class="module-card">
+        <div class="module-head">
+          <div class="module-icon mi-4">🔬</div>
+          <div>
+            <div class="module-title">模块四：技术雷达</div>
+            <div class="module-subtitle">Tech Radar</div>
+          </div>
+        </div>
+        <div class="module-body">
+          <div class="console-panel">
+            <span class="dim">┌─────────────────────────────────────────┐</span><br>
+            <span class="dim">│</span>  <span class="highlight">🔬 PQC 算法生态实时雷达</span>                  <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  NIST标准:  ML-KEM <span style="color:#10b981;">●</span> | ML-DSA <span style="color:#10b981;">●</span> | SLH-DSA <span style="color:#10b981;">●</span> | FN-DSA <span style="color:#f59e0b;">◐</span> | HQC <span style="color:#94a3b8;">○</span> |<br>
+            <span class="dim">│</span>  中国竞赛:   Aigis-enc <span style="color:#10b981;">●</span> | Aigis-sig <span style="color:#10b981;">●</span> | LAC <span style="color:#f59e0b;">◐</span> |<br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  算法对比矩阵（安全性/性能/密钥大小/成熟度） <span class="dim">│</span><br>
+            <span class="dim">│</span>  开源库成熟度追踪（liboqs/OQS/BoringSSL等）<span class="dim">│</span><br>
+            <span class="dim">│</span>  HSM/密码机产品矩阵（Thales/Samsung/安恒） <span class="dim">│</span><br>
+            <span class="dim">│</span>  供应商能力图谱（谁提供了什么？谁通过认证？）<span class="dim">│</span><br>
+            <span class="dim">└─────────────────────────────────────────┘</span>
+          </div>
+          <div class="highlight-box">
+            <strong>独特价值：</strong>这是目前全球最碎片化的信息领域——一个统一的技术雷达本身就是壁垒。
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 5 -->
+      <div class="module-card">
+        <div class="module-head">
+          <div class="module-icon mi-5">📋</div>
+          <div>
+            <div class="module-title">模块五：合规与标准追踪</div>
+            <div class="module-subtitle">Compliance Tracker</div>
+          </div>
+        </div>
+        <div class="module-body">
+          <div class="console-panel">
+            <span class="dim">┌─────────────────────────────────────────┐</span><br>
+            <span class="dim">│</span>  <span class="highlight">📋 全球 PQC 合规要求矩阵</span>                 <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  按行业×地区筛选：                         <span class="dim">│</span><br>
+            <span class="dim">│</span>  ┌─────────┬──────┬──────┬──────┐       <span class="dim">│</span><br>
+            <span class="dim">│</span>  │         │ 美国  │ 欧盟  │ 中国 │       <span class="dim">│</span><br>
+            <span class="dim">│</span>  ├─────────┼──────┼──────┼──────┤       <span class="dim">│</span><br>
+            <span class="dim">│</span>  │ 金融    │2035  │2035  │2030  │       <span class="dim">│</span><br>
+            <span class="dim">│</span>  │ 政府    │2035  │2035  │2035  │       <span class="dim">│</span><br>
+            <span class="dim">│</span>  │ 国防    │2027  │  -   │  -   │       <span class="dim">│</span><br>
+            <span class="dim">│</span>  │ 关基    │2035  │2033  │2030  │       <span class="dim">│</span><br>
+            <span class="dim">│</span>  └─────────┴──────┴──────┴──────┘       <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  <span class="prompt">[查看详细要求]</span> <span class="prompt">[下载合规清单]</span> <span class="prompt">[订阅变更通知]</span><span class="dim">│</span><br>
+            <span class="dim">└─────────────────────────────────────────┘</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 6 -->
+      <div class="module-card">
+        <div class="module-head">
+          <div class="module-icon mi-6">💼</div>
+          <div>
+            <div class="module-title">模块六：产业链与市场情报</div>
+            <div class="module-subtitle">Market Intelligence</div>
+          </div>
+        </div>
+        <div class="module-body">
+          <div class="console-panel">
+            <span class="dim">┌─────────────────────────────────────────┐</span><br>
+            <span class="dim">│</span>  <span class="highlight">💼 PQC 产业链全景图</span>                      <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  市场数据：                               <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 全球市场规模：$X亿（2025）→ $Y亿（2030）<span class="dim">│</span><br>
+            <span class="dim">│</span>  • 投融资动态实时追踪                      <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 主要玩家图谱（芯片/协议/产品/服务/咨询） <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 招投标动态（关键词挖掘）                <span class="dim">│</span><br>
+            <span class="dim">│</span>  • 人才市场热度（招聘需求趋势）             <span class="dim">│</span><br>
+            <span class="dim">│</span>                                          <span class="dim">│</span><br>
+            <span class="dim">│</span>  <span class="prompt">[产业链图谱]</span> <span class="prompt">[投资热度图]</span> <span class="prompt">[竞争态势]</span>   <span class="dim">│</span><br>
+            <span class="dim">└─────────────────────────────────────────┘</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ====== KILLER FEATURES ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <h2 class="section-title">三个"杀手锏"功能</h2>
+      <p class="section-desc">差异化获客引擎 + 数据飞轮 + 转化闭环。</p>
+    </div>
+
+    <div class="killer-grid">
+      <div class="killer-card">
+        <div class="killer-num">01</div>
+        <div class="killer-title">🔥 PQC 组织自评引擎</div>
+        <div class="killer-desc">
+          用户输入行业、系统数量、当前加密体系、合规要求 → 自动生成迁移紧迫度评分 + 分阶段路线图 + 预算估算 + 供应商推荐 + 一键导出汇报 PPT/PDF。
+        </div>
+        <span class="killer-tag kt-green">获客引擎</span>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">免费工具 → 收集线索 → 转化咨询/产品</div>
+      </div>
+
+      <div class="killer-card">
+        <div class="killer-num">02</div>
+        <div class="killer-title">🔐 密码资产 CBOM 生成器</div>
+        <div class="killer-desc">
+          对接用户系统 → 自动扫描密码资产 → 生成 CBOM（密码物料清单）→ 可视化展示脆弱面 → 优先修复建议 → 迁移进度追踪。
+        </div>
+        <span class="killer-tag kt-purple">全球首创</span>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">CBOM 对标 SBOM 概念，目前全球几乎没人做</div>
+      </div>
+
+      <div class="killer-card">
+        <div class="killer-num">03</div>
+        <div class="killer-title">⏰ 全球政策倒计时时钟</div>
+        <div class="killer-desc">
+          美国国防承包商强制合规 / 中国关基商密规定 / NSA CNSA 2.0 签名切换 / NIST 112位废弃——大限前自动推送提醒。
+        </div>
+        <span class="killer-tag kt-red">紧迫感转化</span>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">倒计时是最直接的决策触发工具</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== BUSINESS MODEL ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <h2 class="section-title">商业模式</h2>
+      <p class="section-desc">三层收入结构 + 延伸变现。</p>
+    </div>
+
+    <table class="biz-table">
+      <thead>
+        <tr>
+          <th>层级</th>
+          <th>产品</th>
+          <th>定价</th>
+          <th>目标用户</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tier-label tier-free">免费层</span></td>
+          <td>态势地图 + 部分新闻 + 基础自评</td>
+          <td style="font-weight:700;">免费</td>
+          <td>所有人，引流</td>
+        </tr>
+        <tr>
+          <td><span class="tier-label tier-pro">专业层</span></td>
+          <td>完整仪表盘 + 深度报告 + 自评工具 + CBOM 生成器</td>
+          <td style="font-weight:700;">¥2-5万/年</td>
+          <td>企业安全团队</td>
+        </tr>
+        <tr>
+          <td><span class="tier-label tier-ent">企业层</span></td>
+          <td>定制驾驶仓 + API 数据接口 + 专属报告 + 咨询服务</td>
+          <td style="font-weight:700;">¥20-50万/年</td>
+          <td>大型金融机构/政府/央企</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin: 24px 0 12px; font-size: 15px;">延伸变现</h3>
+    <ul style="list-style:none;padding:0;">
+      <li style="padding:6px 0;color:var(--text-secondary);padding-left:18px;position:relative;">
+        <span style="position:absolute;left:0;color:var(--accent);">▸</span>
+        PQC 迁移咨询（通过平台获客）
+      </li>
+      <li style="padding:6px 0;color:var(--text-secondary);padding-left:18px;position:relative;">
+        <span style="position:absolute;left:0;color:var(--accent);">▸</span>
+        行业年度报告（类似 Gartner 象限）
+      </li>
+      <li style="padding:6px 0;color:var(--text-secondary);padding-left:18px;position:relative;">
+        <span style="position:absolute;left:0;color:var(--accent);">▸</span>
+        闭门研讨会/培训（会员专属）
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====== TECH STACK ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <h2 class="section-title">技术架构建议</h2>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <span class="stack-label frontend">前端</span>
+        <span class="stack-text">Next.js + Tailwind CSS + shadcn/ui + Recharts/D3.js</span>
+      </div>
+      <div class="stack-item">
+        <span class="stack-label backend">后端</span>
+        <span class="stack-text">Python FastAPI / Go（数据采集与清洗管线）</span>
+      </div>
+      <div class="stack-item">
+        <span class="stack-label data">数据层</span>
+        <span class="stack-text">PostgreSQL + Neo4j（知识图谱）+ Elasticsearch（全文检索）</span>
+      </div>
+      <div class="stack-item">
+        <span class="stack-label infra">数据采集</span>
+        <span class="stack-text">定时爬虫 + RSS 监控 + 政府公告 API + ArXiv 论文监控</span>
+      </div>
+      <div class="stack-item">
+        <span class="stack-label data">AI 层</span>
+        <span class="stack-text">LLM 摘要生成 + 智能问答（基于 RAG 的知识库问答）</span>
+      </div>
+      <div class="stack-item">
+        <span class="stack-label infra">部署</span>
+        <span class="stack-text">Vercel（前端）+ AWS/阿里云（后端）</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== LAUNCH STRATEGY ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <h2 class="section-title">冷启动策略</h2>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h5>先做一个垂直领域的极致产品</h5>
+          <p>只做"全球 PQC 政策时间线"这一个仪表盘，做到全球最全。开发周期 2-3 周。</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h5>内容驱动增长</h5>
+          <p>每周一篇深度解读 + 中英文双语。中国视角解读全球本身就是稀缺内容。</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h5>开源社区联动</h5>
+          <p>把 CBOM 工具开源，吸引开发者社区，建立技术信任。</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h5>机构合作</h5>
+          <p>与密标委/信通院/高校联合发布报告，建立权威性和行业话语权。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== UNIQUE ADVANTAGE ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <h2 class="section-title">你的独特优势</h2>
+      <p class="section-desc">回到你关注的国密+抗量子领域——这些是你做这件事的天然壁垒。</p>
+    </div>
+
+    <div class="advantage-box">
+      <h4>为什么是你来做？</h4>
+      <ul>
+        <li><strong>做"中西双视角"驾驶仓</strong>：同时覆盖 NIST 体系和中国商密体系，这是市面上完全空白的地带</li>
+        <li><strong>嵌入国密合规工具</strong>：对标等保/密评/PQC 三重标准的自动化差距分析——国内独一份</li>
+        <li><strong>建立中国 PQC 产业链数据库</strong>：国内企业、产品、标准进展的权威信息源——数据即壁垒</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ====== NEXT STEPS ====== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <h2 class="section-title">下一步推进建议</h2>
+    </div>
+
+    <div class="next-grid">
+      <div class="next-card">
+        <div class="next-num">PHASE 1</div>
+        <div class="next-title">单页原型验证</div>
+        <div class="next-meta">2-3 周<br>"全球政策倒计时仪表盘"</div>
+      </div>
+      <div class="next-card">
+        <div class="next-num">PHASE 2</div>
+        <div class="next-title">用户需求验证</div>
+        <div class="next-meta">找 10 个目标用户深聊<br>迭代产品方向</div>
+      </div>
+      <div class="next-card">
+        <div class="next-num">PHASE 3</div>
+        <div class="next-title">打磨核心功能</div>
+        <div class="next-meta">PQC 自评引擎<br>+ CBOM 工具</div>
+      </div>
+      <div class="next-card">
+        <div class="next-num">PHASE 4</div>
+        <div class="next-title">构建数据飞轮</div>
+        <div class="next-meta">用户数据反哺知识库<br>知识库提升产品价值</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== FOOTER ====== -->
+<footer class="footer">
+  PQC Sentinel · Strategic Cockpit Concept Design v1.0 · June 2026<br>
+  全球抗量子密码态势感知与决策支持平台
+</footer>
+
+</body>
+</html>
