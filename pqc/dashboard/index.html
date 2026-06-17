@@ -560,9 +560,9 @@
     </div>
   </div>
   <div class="header-right">
-    <span>数据更新</span>
-    <span class="header-time" id="liveTime">--</span>
-    <span style="font-size:10px;opacity:0.5;">UTC+8</span>
+    <span>数据截止</span>
+    <span class="header-time">2026年6月</span>
+    <span style="font-size:10px;opacity:0.5;">仅供参考</span>
   </div>
 </header>
 
@@ -652,34 +652,31 @@
     <!-- ===== ROW 2: 政策倒计时 + 迁移成熟度 ===== -->
     <div class="grid-2">
 
-      <!-- 全球政策倒计时时钟 -->
+      <!-- 全球政策关键截止日期 -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title"><span class="icon">⏰</span> 全球政策倒计时时钟</div>
-          <span class="card-badge badge-alert">DEADLINE WATCH</span>
+          <div class="card-title"><span class="icon">📅</span> 全球政策关键截止日期</div>
+          <span class="card-badge badge-info">时间节点</span>
         </div>
         <div class="countdown-row">
           <div class="countdown-item">
             <div class="countdown-label">🇺🇸 美国国防承包商 PQC 强制合规</div>
-            <div class="countdown-days urgent" id="cd-us-defense">--</div>
-            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:65%;background:var(--accent-red);"></div></div>
+            <div class="countdown-days urgent">2027年1月</div>
           </div>
           <div class="countdown-item">
             <div class="countdown-label">🇨🇳 关基商密规定落实大限</div>
-            <div class="countdown-days warning" id="cd-cn-critical">--</div>
-            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:40%;background:var(--accent-orange);"></div></div>
+            <div class="countdown-days warning">2030年8月</div>
           </div>
           <div class="countdown-item">
             <div class="countdown-label">🇺🇸 NIST 112位安全强度算法废弃</div>
-            <div class="countdown-days normal" id="cd-nist-deprecate">--</div>
-            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:25%;background:var(--accent-cyan);"></div></div>
+            <div class="countdown-days normal">2030年1月</div>
           </div>
           <div class="countdown-item">
             <div class="countdown-label">🇪🇺 EU DORA 密码敏捷性合规</div>
-            <div class="countdown-days warning" id="cd-eu-dora">--</div>
-            <div class="countdown-bar"><div class="countdown-bar-fill" style="width:18%;background:var(--accent-orange);"></div></div>
+            <div class="countdown-days warning">2033年1月</div>
           </div>
         </div>
+        <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:8px;">⚠️ 以上日期仅供参考，请以官方最新文件为准</div>
       </div>
 
       <!-- 迁移成熟度仪表盘 -->
@@ -878,31 +875,6 @@
 </div>
 
 <script>
-// ==================== LIVE CLOCK ====================
-function updateClock() {
-  const now = new Date();
-  document.getElementById('liveTime').textContent =
-    now.toLocaleString('zh-CN', { hour12: false });
-}
-updateClock();
-setInterval(updateClock, 1000);
-
-// ==================== COUNTDOWN CLOCKS ====================
-function calcDays(targetDate) {
-  const now = new Date();
-  const diff = targetDate - now;
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-}
-
-document.getElementById('cd-us-defense').textContent =
-  calcDays(new Date('2027-01-01')).toLocaleString() + ' 天';
-document.getElementById('cd-cn-critical').textContent =
-  calcDays(new Date('2030-08-01')).toLocaleString() + ' 天';
-document.getElementById('cd-nist-deprecate').textContent =
-  calcDays(new Date('2030-01-01')).toLocaleString() + ' 天';
-document.getElementById('cd-eu-dora').textContent =
-  calcDays(new Date('2033-01-17')).toLocaleString() + ' 天';
-
 // ==================== GEO MAP DOTS ====================
 const geoDots = [
   { x: 22, y: 38, label: '🇺🇸 NIST FIPS 203-206', r: 'us' },
