@@ -382,6 +382,39 @@
     .btn-row { display: none; }
     .result-panel { box-shadow: none; border: 1px solid #ccc; }
   }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 900px) {
+    .container { padding: 0 14px; }
+    .hero { padding: 44px 14px 32px; }
+    .hero h1 { font-size: clamp(22px, 6vw, 36px); }
+    .section { padding: 32px 0; }
+    .section-title { font-size: 18px; }
+  }
+  @media (max-width: 640px) {
+    .container { padding: 0 10px; }
+    .hero { padding: 34px 10px 24px; }
+    .hero h1 { font-size: 1.25rem; }
+    .hero .sub { font-size: 13px; }
+    .section { padding: 24px 0; }
+    .section-title { font-size: 16px; }
+    .section-desc { font-size: 12px; margin-bottom: 16px; }
+    .info-box, .warn-box { padding: 10px 14px; font-size: 12px; }
+    table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .stat-row { gap: 8px; }
+    .stat-box { min-width: 100px; padding: 12px 10px; }
+    .stat-num { font-size: 1.5em; }
+  }
+  @media (max-width: 420px) {
+    .hero { padding: 24px 8px 18px; }
+    .hero h1 { font-size: 1.1rem; }
+    .hero .sub { font-size: 11px; }
+    .section-title { font-size: 14px; }
+    .stat-row { gap: 6px; }
+    .stat-box { min-width: 80px; padding: 10px 8px; }
+    .stat-num { font-size: 1.2em; }
+    .stat-label { font-size: 0.75em; }
+  }
 </style>
 </head>
 <body>

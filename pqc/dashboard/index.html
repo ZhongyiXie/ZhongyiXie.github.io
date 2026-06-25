@@ -539,6 +539,42 @@
     color: var(--text-primary);
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 1100px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .header { padding: 0 14px; height: 50px; }
+    .logo { font-size: 15px; }
+  }
+  @media (max-width: 768px) {
+    .header { height: 46px; padding: 0 10px; }
+    .header-left { gap: 8px; }
+    .logo { font-size: 13px; gap: 6px; }
+    .logo svg, .logo img { width: 20px; height: 20px; }
+    .header-right { gap: 6px; }
+    .header-right button, .header-right a { font-size: 11px; padding: 5px 10px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .kpi-card { padding: 14px; }
+    .kpi-value { font-size: 1.6em; }
+    .panel { padding: 14px; }
+    .panel-title { font-size: 15px; }
+    .chart-wrap { min-height: 220px; }
+    table { font-size: 11px; display: block; overflow-x: auto; }
+    .footer { padding: 20px 10px; font-size: 11px; }
+  }
+  @media (max-width: 480px) {
+    .header { height: 42px; }
+    .logo span { display: none; }
+    .logo { font-size: 12px; }
+    .header-right button, .header-right a { font-size: 10px; padding: 4px 8px; }
+    .kpi-row { grid-template-columns: 1fr; gap: 6px; }
+    .kpi-card { padding: 10px 12px; }
+    .kpi-value { font-size: 1.3em; }
+    .panel { padding: 10px; border-radius: 8px; }
+    .panel-title { font-size: 13px; }
+    .chart-wrap { min-height: 180px; }
+    body::before { background-size: 24px 24px; }
+  }
 </style>
 </head>
 <body>

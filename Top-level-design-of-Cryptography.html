@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商用密码应用顶层设计方案 — 交互式框架</title>
+<style>
+  /* ═══════════════════════════════════════════════════
+     DESIGN TOKENS — CSS Custom Properties
+     ═══════════════════════════════════════════════════ */
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #e1e4e8;
+    --text: #1a1a2e;
+    --text-secondary: #5a6170;
+    --primary: #1e3a5f;
+    --primary-light: #2d5f8a;
+    --accent: #c41e3a;
+    --accent-light: #fde8ec;
+    --gold: #b8860b;
+    --gold-light: #fef9e7;
+    --sidebar-width: 280px;
+    --sidebar-narrow: 240px;
+    --header-height: 56px;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,.10);
+    --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --content-max: 1000px;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     RESET & BASE
+     ═══════════════════════════════════════════════════ */
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SIDEBAR
+     ═══════════════════════════════════════════════════ */
+  .sidebar {
+    position: fixed; top:0; left:0; bottom:0;
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, #0d1b2a 0%, #1b2838 40%, #162032 100%);
+    color: #c8d6e5;
+    display: flex; flex-direction: column;
+    z-index: 100;
+    box-shadow: 2px 0 12px rgba(0,0,0,.18);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    flex-shrink: 0;
+  }
+  .sidebar-header h1 {
+    font-size: clamp(14px, 1.1vw, 16px);
+    font-weight: 700; color: #fff;
+    letter-spacing: .5px; line-height: 1.4;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px; color: #8899aa; margin-top: 4px;
+  }
+  .sidebar-search {
+    margin: 12px 16px; position: relative; flex-shrink: 0;
+  }
+  .sidebar-search input {
+    width: 100%; padding: 8px 12px 8px 32px;
+    border-radius: 6px; border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.06); color: #e8edf2;
+    font-size: 13px; outline: none;
+    transition: border var(--transition), background var(--transition);
+  }
+  .sidebar-search input::placeholder { color: #667a8a; }
+  .sidebar-search input:focus {
+    border-color: rgba(255,255,255,.25);
+    background: rgba(255,255,255,.10);
+  }
+  .sidebar-search .search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: #5a7a90; font-size: 14px; pointer-events: none;
+  }
+  .sidebar-nav {
+    flex: 1; overflow-y: auto; padding: 8px 0;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+  .sidebar-nav .part-label {
+    padding: 10px 20px 4px;
+    font-size: 10px; font-weight: 700; color: #b8860b;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .sidebar-nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 20px; font-size: 13px; color: #b0bec5;
+    text-decoration: none; border-left: 3px solid transparent;
+    transition: all var(--transition);
+    min-height: 36px;
+  }
+  .sidebar-nav a:hover { background: rgba(255,255,255,.04); color: #e0e8f0; }
+  .sidebar-nav a:active { background: rgba(255,255,255,.10); }
+  .sidebar-nav a.active {
+    background: rgba(255,255,255,.07); color: #fff;
+    border-left-color: var(--accent);
+  }
+  .sidebar-nav a .ch-num {
+    font-size: 10px; font-weight: 700; color: #5a7a90;
+    min-width: 28px; text-align: right; flex-shrink: 0;
+  }
+  .sidebar-nav a.active .ch-num { color: var(--accent); }
+  .sidebar-footer {
+    padding: 12px 20px; border-top: 1px solid rgba(255,255,255,.08);
+    font-size: 11px; color: #5a7a90;
+    display: flex; justify-content: space-between; flex-shrink: 0;
+    gap: 8px; flex-wrap: wrap;
+  }
+  .sidebar-footer span { cursor: pointer; transition: color var(--transition); white-space:nowrap; }
+  .sidebar-footer span:hover { color: #b0bec5; }
+
+  /* Mobile: sidebar slides in from left as overlay */
+  .sidebar-mask {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 99;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .sidebar-mask.open { opacity: 1; pointer-events: auto; }
+
+  /* ═══════════════════════════════════════════════════
+     MAIN CONTENT AREA
+     ═══════════════════════════════════════════════════ */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1; min-width: 0;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; flex-direction: column;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    height: var(--header-height); min-height: var(--header-height);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(12px, 3vw, 28px); gap: 12px;
+  }
+  .topbar .breadcrumb {
+    font-size: 13px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 400px;
+  }
+  .topbar .breadcrumb span { color: var(--primary); font-weight: 600; }
+  .topbar-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .topbar-actions button {
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text-secondary); font-size: 12px;
+    cursor: pointer; transition: all var(--transition);
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .topbar-actions button:hover { background: var(--bg); border-color: #ccc; }
+  .topbar-actions button:active { transform: scale(0.97); }
+  .topbar-actions .btn-export {
+    background: var(--primary); color: #fff; border-color: var(--primary);
+  }
+  .topbar-actions .btn-export:hover { background: var(--primary-light); }
+
+  /* ── Hamburger (mobile) ── */
+  .hamburger {
+    display: none; flex-direction: column; gap: 4px; cursor: pointer;
+    width: 24px; height: 18px; justify-content: center; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    padding: 4px 0;
+  }
+  .hamburger span {
+    display: block; height: 2px; background: var(--text);
+    border-radius: 2px; transition: all var(--transition);
+    transform-origin: center;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    padding: 0 clamp(12px, 3vw, 28px);
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .progress-bar-outer {
+    height: 4px; background: var(--border); border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-inner {
+    height: 100%; background: linear-gradient(90deg, var(--primary-light), var(--accent));
+    border-radius: 2px; transition: width .5s ease;
+    will-change: width;
+  }
+  .progress-label {
+    font-size: 11px; color: var(--text-secondary);
+    padding: 6px 0 8px;
+    display: flex; justify-content: space-between;
+  }
+
+  /* ── Content ── */
+  .content {
+    padding: clamp(16px, 3vw, 32px) clamp(12px, 3vw, 32px) 60px;
+    width: 100%; max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SECTION CARDS
+     ═══════════════════════════════════════════════════ */
+  .section-card {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: clamp(12px, 2vw, 20px);
+    border: 1px solid var(--border); overflow: hidden;
+    scroll-margin-top: calc(var(--header-height) + 16px);
+    transition: box-shadow var(--transition);
+  }
+  .section-card:hover { box-shadow: var(--shadow-lg); }
+  .section-card.highlight {
+    border-left: 4px solid var(--accent);
+    animation: highlightPulse 2s ease-out;
+  }
+  @keyframes highlightPulse {
+    0% { box-shadow: 0 0 0 4px rgba(196,30,58,.15); }
+    100% { box-shadow: var(--shadow); }
+  }
+  .section-card.collapsed .card-body { display: none; }
+
+  .card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: clamp(12px, 2vw, 16px) clamp(14px, 2vw, 20px);
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: background var(--transition);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card-header:hover { background: #fafbfc; }
+  .card-header:active { background: #f0f2f5; }
+  .section-card:not(.collapsed) .card-header { border-bottom-color: var(--border); }
+
+  .card-num {
+    width: clamp(32px, 5vw, 38px); height: clamp(32px, 5vw, 38px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(11px, 1.5vw, 12px); font-weight: 700; flex-shrink: 0;
+  }
+  .part-I .card-num { background: #e3f2fd; color: #1565c0; }
+  .part-II .card-num { background: #e8f5e9; color: #2e7d32; }
+  .part-III .card-num { background: #fff3e0; color: #e65100; }
+  .part-IV .card-num { background: #fce4ec; color: #c62828; }
+  .part-V .card-num { background: #f3e5f5; color: #6a1b9a; }
+  .part-VI .card-num { background: #e0f7fa; color: #00695c; }
+
+  .card-title { flex:1; min-width:0; }
+  .card-title h3 { font-size: clamp(13px, 1.8vw, 15px); font-weight: 700; color: var(--text); }
+  .card-title .eng { font-size: clamp(10px, 1.2vw, 11px); color: var(--text-secondary); }
+  .card-arrow {
+    font-size: 16px; color: #aaa; transition: transform var(--transition);
+    flex-shrink: 0; width: 20px; text-align: center;
+  }
+  .section-card:not(.collapsed) .card-arrow { transform: rotate(90deg); }
+
+  .card-body { padding: clamp(14px, 2.5vw, 20px); }
+  .card-body h4 {
+    font-size: clamp(12px, 1.6vw, 14px); font-weight: 700; color: var(--primary);
+    margin: 16px 0 8px; padding-left: 10px; border-left: 3px solid var(--primary-light);
+  }
+  .card-body h4:first-child { margin-top: 0; }
+  .card-body ul { list-style: none; padding-left: 0; }
+  .card-body ul li {
+    position: relative; padding: 4px 0 4px 20px;
+    font-size: clamp(12px, 1.5vw, 13.5px);
+    color: var(--text-secondary);
+  }
+  .card-body ul li::before {
+    content: ''; position: absolute; left: 4px; top: 12px;
+    width: 6px; height: 6px; border-radius: 50%; background: #ccd;
+  }
+  .card-body ul li strong { color: var(--text); }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block; padding: 2px 6px; border-radius: 3px;
+    font-size: 10px; font-weight: 600; margin-right: 3px;
+    letter-spacing: .3px; vertical-align: middle;
+  }
+  .tag-law { background: #fde8ec; color: #c41e3a; }
+  .tag-std { background: #e3f2fd; color: #1565c0; }
+  .tag-tech { background: #e8f5e9; color: #2e7d32; }
+  .tag-mgmt { background: #fff3e0; color: #e65100; }
+  .tag-future { background: #f3e5f5; color: #6a1b9a; }
+
+  .rel-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+    background: var(--gold-light); color: var(--gold);
+    cursor: pointer; transition: all var(--transition);
+  }
+  .rel-badge:hover { background: #fdf0d5; }
+
+  /* ═══════════════════════════════════════════════════
+     TAB BAR
+     ═══════════════════════════════════════════════════ */
+  .tab-bar {
+    display: flex; gap: 0; border-bottom: 2px solid var(--border);
+    margin-bottom: 16px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 8px clamp(10px, 2vw, 18px); font-size: clamp(11px, 1.5vw, 13px);
+    font-weight: 600; color: var(--text-secondary); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all var(--transition); background: none;
+    border-top: none; border-left: none; border-right: none;
+    white-space: nowrap; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab-btn:active { color: var(--primary); }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ═══════════════════════════════════════════════════
+     ALGORITHM GRID
+     ═══════════════════════════════════════════════════ */
+  .algo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+    gap: clamp(8px, 1.5vw, 12px);
+  }
+  .algo-card {
+    padding: clamp(12px, 2vw, 14px); border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--bg);
+  }
+  .algo-card .algo-name {
+    font-size: clamp(16px, 2.5vw, 18px); font-weight: 800; color: var(--primary);
+    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  }
+  .algo-card .algo-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .algo-card .algo-use { font-size: 11px; color: var(--accent); margin-top: 6px; font-weight: 600; }
+
+  /* ═══════════════════════════════════════════════════
+     PHASE TIMELINE
+     ═══════════════════════════════════════════════════ */
+  .phase-timeline {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .phase-block {
+    flex: 1 1 0; min-width: min(140px, 45%); padding: clamp(10px, 2vw, 16px);
+    border-radius: var(--radius); border: 1px solid var(--border);
+    text-align: center; position: relative;
+  }
+  .phase-block .phase-num {
+    font-size: clamp(22px, 4vw, 28px); font-weight: 800; color: var(--primary-light);
+  }
+  .phase-block .phase-title {
+    font-size: clamp(11px, 1.6vw, 13px); font-weight: 700; margin: 4px 0;
+  }
+  .phase-block .phase-desc {
+    font-size: clamp(10px, 1.3vw, 11px); color: var(--text-secondary);
+  }
+  .phase-block::after {
+    content: '→'; position: absolute; right: -14px; top: 50%;
+    transform: translateY(-50%); font-size: 16px; color: #ccc;
+  }
+  .phase-block:last-child::after { display: none; }
+
+  /* ═══════════════════════════════════════════════════
+     RESPONSIVE TABLES WRAPPER
+     ═══════════════════════════════════════════════════ */
+  .table-wrap {
+    width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    margin: 8px 0;
+  }
+  table {
+    width: 100%; border-collapse: collapse; font-size: clamp(11px, 1.4vw, 13px);
+    min-width: 500px; /* ensure tables scroll on narrow screens */
+  }
+  table thead tr { background: var(--bg); }
+  table th, table td {
+    padding: clamp(6px, 1vw, 10px); text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  table th { font-weight: 700; white-space: nowrap; }
+
+  /* ═══════════════════════════════════════════════════
+     OVERVIEW CARDS GRID (tab-overview)
+     ═══════════════════════════════════════════════════ */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+    gap: clamp(10px, 1.5vw, 16px);
+    margin-bottom: 24px;
+  }
+  .overview-card {
+    padding: clamp(14px, 2.5vw, 20px); border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .overview-card .ov-icon { font-size: clamp(22px, 3.5vw, 28px); margin-bottom: 8px; }
+  .overview-card .ov-title { font-weight: 700; font-size: clamp(13px, 1.7vw, 15px); }
+  .overview-card .ov-desc { font-size: clamp(11px, 1.3vw, 12px); color: var(--text-secondary); margin-top: 4px; }
+  .overview-card .ov-tag { margin-top: 8px; font-size: 11px; font-weight: 700; }
+
+  /* ═══════════════════════════════════════════════════
+     ARCHITECTURE LAYERS
+     ═══════════════════════════════════════════════════ */
+  .arch-layer {
+    padding: clamp(10px, 2vw, 18px); border-radius: var(--radius);
+    border-left: 4px solid;
+    margin-bottom: 6px;
+  }
+  .arch-layer strong { display: block; margin-bottom: 4px; }
+  .arch-layer .layer-detail {
+    font-size: clamp(10px, 1.3vw, 12px); color: var(--text-secondary);
+    display: block;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     KEY HIERARCHY
+     ═══════════════════════════════════════════════════ */
+  .key-layer {
+    padding: clamp(8px, 1.5vw, 12px); border-radius: 6px;
+    margin-bottom: 6px;
+  }
+  .key-layer strong { display: block; margin-bottom: 2px; }
+  .key-layer .key-desc { font-size: 11px; color: var(--text-secondary); display: block; }
+
+  /* ═══════════════════════════════════════════════════
+     KEY LIFECYCLE STEPS
+     ═══════════════════════════════════════════════════ */
+  .lifecycle-steps {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin: 8px 0; font-size: clamp(10px, 1.3vw, 12px);
+  }
+  .lifecycle-steps .step {
+    padding: 5px 10px; background: var(--bg); border-radius: 20px;
+    white-space: nowrap;
+  }
+  .lifecycle-steps .arrow { color: #ccc; font-size: 14px; }
+
+  /* ═══════════════════════════════════════════════════
+     BACK TO TOP
+     ═══════════════════════════════════════════════════ */
+  .back-to-top {
+    position: fixed; bottom: clamp(16px, 3vw, 24px); right: clamp(16px, 3vw, 24px);
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--primary); color: #fff; border: none;
+    font-size: 18px; cursor: pointer; box-shadow: var(--shadow-lg);
+    opacity: 0; transform: translateY(20px);
+    transition: all var(--transition); pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 60;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .back-to-top:hover { background: var(--primary-light); }
+  .back-to-top:active { transform: scale(0.92); }
+
+  /* ═══════════════════════════════════════════════════
+     SEARCH
+     ═══════════════════════════════════════════════════ */
+  .search-highlight { background: #ffeb3b; padding: 0 2px; border-radius: 2px; }
+  .no-results {
+    text-align:center; padding: clamp(30px, 8vw, 60px) 20px;
+    color: var(--text-secondary); font-size: 14px;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     COVER (HERO)
+     ═══════════════════════════════════════════════════ */
+  .cover-hero {
+    text-align: center;
+    padding: clamp(30px, 8vw, 60px) clamp(12px, 4vw, 40px) clamp(24px, 5vw, 40px);
+    margin-bottom: 24px;
+  }
+  .cover-hero .cover-eyebrow {
+    font-size: clamp(10px, 1.4vw, 13px); color: var(--text-secondary);
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .cover-hero h1 {
+    font-size: clamp(20px, 4.5vw, 32px); font-weight: 900;
+    color: var(--primary); letter-spacing: 1px; margin-bottom: 8px;
+    line-height: 1.25;
+  }
+  .cover-hero .cover-divider {
+    width: 60px; height: 3px; background: var(--accent); margin: 14px auto;
+  }
+  .cover-hero .cover-desc {
+    font-size: clamp(12px, 1.6vw, 15px); color: var(--text-secondary);
+    max-width: 640px; margin: 0 auto; line-height: 1.6;
+  }
+  .cover-hero .cover-meta {
+    margin-top: 20px; font-size: clamp(11px, 1.3vw, 13px);
+    color: var(--text-secondary); display: flex; flex-wrap: wrap;
+    justify-content: center; gap: 8px 16px;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PRINT
+     ═══════════════════════════════════════════════════ */
+  @media print {
+    .sidebar, .topbar, .back-to-top, .progress-wrap, .hamburger, .sidebar-mask { display: none !important; }
+    .main { margin-left: 0 !important; }
+    .section-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    .section-card.collapsed .card-body { display: block !important; }
+    .content { padding: 0; max-width: 100%; }
+    .tab-panel { display: block !important; }
+    body { font-size: 12px; }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     RESPONSIVE BREAKPOINTS
+     ═══════════════════════════════════════════════════ */
+
+  /* ── ≥1400px: large desktop ── */
+  @media (min-width: 1400px) {
+    :root { --content-max: 1040px; }
+  }
+
+  /* ── 1200–1399px: standard desktop ── */
+  @media (min-width: 1200px) and (max-width: 1399px) {
+    :root { --content-max: 920px; }
+  }
+
+  /* ── 1024–1199px: small desktop / tablet landscape ──
+     Sidebar stays visible but narrow; hamburger still hidden ── */
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    :root {
+      --sidebar-width: 240px;
+      --content-max: 820px;
+    }
+    .content { padding: 24px 20px 48px; }
+    .topbar { padding: 0 20px; }
+    .progress-wrap { padding: 0 20px; }
+  }
+
+  /* ── 768–1023px: tablet portrait ──
+     Sidebar becomes overlay, hamburger visible ── */
+  @media (max-width: 1023px) {
+    :root { --sidebar-width: 280px; }
+    .sidebar {
+      transform: translateX(-100%);
+      box-shadow: 4px 0 20px rgba(0,0,0,.25);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-mask { display: block; }
+    .main { margin-left: 0 !important; }
+    .hamburger { display: flex; }
+    .topbar { padding: 0 clamp(12px, 2.5vw, 20px); }
+    .progress-wrap { padding: 0 clamp(12px, 2.5vw, 20px); }
+    .content {
+      padding: clamp(14px, 2.5vw, 24px) clamp(12px, 2.5vw, 20px) 48px;
+      max-width: 100%;
+    }
+    .topbar .breadcrumb { font-size: 12px; max-width: 260px; }
+    /* phase arrows become down arrows */
+    .phase-block::after {
+      content: '↓'; right: 50%; top: auto; bottom: -18px;
+      transform: translateX(50%); font-size: 14px;
+    }
+    .phase-block:last-child::after { display: none; }
+    /* overview grid adjusts */
+    .overview-grid { grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+  }
+
+  /* ── <768px: mobile phones ── */
+  @media (max-width: 767px) {
+    :root {
+      --header-height: 50px;
+      --radius: 6px;
+    }
+    .sidebar { width: min(280px, 85vw); }
+    .sidebar-header { padding: 16px 16px 12px; }
+    .sidebar-search { margin: 10px 12px; }
+    .sidebar-nav a { padding: 7px 16px; font-size: 12px; }
+    .sidebar-footer { padding: 10px 16px; font-size: 10px; }
+
+    .topbar { height: 50px; padding: 0 12px; gap: 8px; }
+    .topbar .breadcrumb { font-size: 11px; max-width: 180px; }
+    .topbar-actions { gap: 4px; }
+    .topbar-actions button {
+      padding: 5px 8px; font-size: 10px; border-radius: 5px;
+    }
+    .topbar-actions button:nth-child(1),
+    .topbar-actions button:nth-child(2) { display: none; }
+    /* hide "expand all" / "collapse all" on very small screens */
+    @media (max-width: 420px) {
+      .topbar-actions .btn-export { font-size: 10px; padding: 5px 8px; }
+    }
+
+    .content { padding: 12px 10px 40px; }
+
+    .card-header { padding: 12px 14px; gap: 8px; }
+    .card-body { padding: 14px; }
+    .card-title h3 { font-size: 13px; }
+    .card-body h4 { font-size: 12px; margin: 12px 0 6px; }
+    .card-body ul li { font-size: 12px; padding-left: 16px; }
+
+    /* phase arrows hidden on very tight screens */
+    .phase-block::after { display: none; }
+    .phase-block { min-width: 42%; }
+
+    /* tab bar scrollable with subtle fade hint */
+    .tab-bar { gap: 2px; }
+    .tab-btn { padding: 7px 10px; font-size: 11px; }
+
+    /* overview single column */
+    .overview-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    /* cover */
+    .cover-hero h1 { font-size: 18px; }
+
+    /* all inline tables should scroll */
+    .section-card .card-body > table,
+    .section-card .card-body > div > table {
+      display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+
+    /* make key lifecycle steps more compact */
+    .lifecycle-steps { gap: 3px; }
+    .lifecycle-steps .step { padding: 3px 7px; font-size: 10px; }
+    .lifecycle-steps .arrow { font-size: 10px; }
+
+    .back-to-top {
+      width: 36px; height: 36px; bottom: 14px; right: 14px; font-size: 16px;
+    }
+  }
+
+  /* ── 420px and below: very small phones ── */
+  @media (max-width: 420px) {
+    .topbar .breadcrumb { font-size: 10px; max-width: 140px; }
+    .topbar-actions button { font-size: 9px; padding: 4px 7px; }
+    .card-num { width: 28px; height: 28px; font-size: 10px; }
+    .card-title h3 { font-size: 12px; }
+    .tab-btn { padding: 6px 8px; font-size: 10px; }
+    .algo-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .algo-card { padding: 10px; }
+    .algo-card .algo-name { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>商用密码应用<br>顶层设计方案</h1>
+    <div class="subtitle">v3.0 · 通用完整版框架</div>
+  </div>
+  <div class="sidebar-search">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="搜索章节 / 关键词…" autocomplete="off">
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <!-- JS populated -->
+  </nav>
+  <div class="sidebar-footer">
+    <span onclick="expandAll()">📖 全部展开</span>
+    <span onclick="collapseAll()">📕 全部折叠</span>
+    <span onclick="window.print()">🖨️ 打印</span>
+  </div>
+</aside>
+
+<div class="sidebar-mask" id="sidebarMask" onclick="closeSidebar()"></div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="main" id="mainContent">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="breadcrumb">
+        商用密码顶层设计 / <span id="currentSection">总论</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button onclick="expandAll()">展开全部</button>
+      <button onclick="collapseAll()">折叠全部</button>
+      <button class="btn-export" onclick="exportProgress()">📋 导出进度</button>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>阅读进度</span><span id="progressPercent">0 / 22 章</span>
+    </div>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progressBar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <!-- ═══════════ 封面 ═══════════ -->
+    <div class="cover-hero">
+      <div class="cover-eyebrow">中华人民共和国 · 商用密码应用安全</div>
+      <h1>全域商用密码安全顶层设计方案</h1>
+      <div class="cover-divider"></div>
+      <p class="cover-desc">
+        涵盖密码基础设施、统一密码服务中台、密钥全生命周期管理（KMS）、<br>
+        公钥基础设施（PKI/SM9）、密码应用分层防护及抗量子密码兼容预留的完整顶层设计
+      </p>
+      <div class="cover-meta">
+        <span>版本 v3.0</span>
+        <span>密级：内部</span>
+        <span>2026年6月</span>
+      </div>
+    </div>
+
+    <!-- ═══════════ TAB: 快速导航 ═══════════ -->
+    <div class="tab-bar" style="margin-bottom:24px;">
+      <button class="tab-btn active" onclick="switchTab('overview')">📋 框架总览</button>
+      <button class="tab-btn" onclick="switchTab('algo')">🔐 算法矩阵</button>
+      <button class="tab-btn" onclick="switchTab('roadmap')">🗺️ 实施路线</button>
+      <button class="tab-btn" onclick="switchTab('arch')">🏗️ 架构视图</button>
+    </div>
+
+    <!-- Tab Panel: 框架总览 -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="overview-grid">
+        <div class="overview-card"><div class="ov-icon">📐</div><div class="ov-title">第一部分 · 总论</div><div class="ov-desc">项目概述、政策依据、现状调研与风险分析、总体安全架构</div><div class="ov-tag" style="color:var(--accent);">4章 · 规划基线</div></div>
+        <div class="overview-card"><div class="ov-icon">⚙️</div><div class="ov-title">第二部分 · 总体技术架构</div><div class="ov-desc">基础设施、密码中台、KMS、PKI/SM9、分层防护、审计联动</div><div class="ov-tag" style="color:#2e7d32;">6章 · 核心技术</div></div>
+        <div class="overview-card"><div class="ov-icon">📏</div><div class="ov-title">第三部分 · 算法与产品规范</div><div class="ov-desc">算法选型基线、产品选型规范、集成开发约束</div><div class="ov-tag" style="color:#e65100;">2章 · 技术基线</div></div>
+        <div class="overview-card"><div class="ov-icon">📋</div><div class="ov-title">第四部分 · 管理体系</div><div class="ov-desc">组织岗位、管理制度、密评常态化、人才培训</div><div class="ov-tag" style="color:#c62828;">4章 · 落地保障</div></div>
+        <div class="overview-card"><div class="ov-icon">🚀</div><div class="ov-title">第五部分 · 实施与运维</div><div class="ov-desc">分阶段实施、预算、常态化运维、应急保障</div><div class="ov-tag" style="color:#6a1b9a;">4章 · 工程落地</div></div>
+        <div class="overview-card"><div class="ov-icon">🔭</div><div class="ov-title">第六部分 · 长期演进</div><div class="ov-desc">中长期路线、抗量子迁移、预期成效</div><div class="ov-tag" style="color:#00695c;">2章 · 战略规划</div></div>
+      </div>
+    </div>
+
+    <!-- Tab Panel: 算法矩阵 -->
+    <div class="tab-panel" id="tab-algo">
+      <div class="section-card" style="border-left:4px solid var(--primary);">
+        <div class="card-body">
+          <h4>🔐 国密算法强制基线</h4>
+          <div class="algo-grid">
+            <div class="algo-card">
+              <div class="algo-name">SM2</div>
+              <div class="algo-desc">椭圆曲线公钥密码算法<br>256-bit 安全强度</div>
+              <div class="algo-use">✓ 数字签名 · 密钥交换 · 公钥加密</div>
+            </div>
+            <div class="algo-card">
+              <div class="algo-name">SM3</div>
+              <div class="algo-desc">密码杂凑算法<br>256-bit 输出</div>
+              <div class="algo-use">✓ 完整性校验 · 数字签名摘要 · HMAC</div>
+            </div>
+            <div class="algo-card">
+              <div class="algo-name">SM4</div>
+              <div class="algo-desc">分组密码算法<br>128-bit 分组 / 密钥</div>
+              <div class="algo-use">✓ 数据加密 · 传输加密 · 存储加密</div>
+            </div>
+            <div class="algo-card">
+              <div class="algo-name">SM9</div>
+              <div class="algo-desc">标识密码算法<br>基于用户身份标识</div>
+              <div class="algo-use">✓ IoT轻量化 · 移动端 · 无证书场景</div>
+            </div>
+          </div>
+          <h4 style="margin-top:20px;">⚠️ 受限/禁用境外算法</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+            <thead>
+              <tr style="background:var(--bg);">
+                <th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">算法</th>
+                <th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">类型</th>
+                <th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">管控措施</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);">RSA-1024/2048</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);">公钥密码</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--accent);">限期替换为 SM2</td></tr>
+              <tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);">SHA-1 / SHA-256</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);">哈希</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--accent);">替换为 SM3</td></tr>
+              <tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);">AES-128/256</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);">对称加密</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:#e65100;">过渡期可控使用，逐步替换为 SM4</td></tr>
+              <tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);">ECDSA / EdDSA</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);">签名</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--accent);">替换为 SM2</td></tr>
+            </tbody>
+          </table>
+          <h4 style="margin-top:20px;">🔮 后量子密码（PQC）兼容预留</h4>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+            <span class="tag tag-future">ML-KEM (FIPS 203)</span>
+            <span class="tag tag-future">ML-DSA (FIPS 204)</span>
+            <span class="tag tag-future">SLH-DSA (FIPS 205)</span>
+            <span class="tag tag-future">格基密码</span>
+            <span class="tag tag-future">哈希基签名</span>
+            <span class="tag tag-future">混合证书模式</span>
+            <span class="tag tag-future">算法敏捷接口</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Panel: 实施路线 -->
+    <div class="tab-panel" id="tab-roadmap">
+      <div class="section-card" style="border-left:4px solid #6a1b9a;">
+        <div class="card-body">
+          <h4>🗓️ 分阶段落地实施规划</h4>
+          <div class="phase-timeline" style="margin-top:12px;">
+            <div class="phase-block">
+              <div class="phase-num">Ⅰ</div>
+              <div class="phase-title">底座搭建</div>
+              <div class="phase-desc">密码中台 · KMS · 根CA<br>硬件密码资源池</div>
+              <div style="font-size:10px;color:var(--text-secondary);margin-top:6px;">6–12 个月</div>
+            </div>
+            <div class="phase-block">
+              <div class="phase-num">Ⅱ</div>
+              <div class="phase-title">核心业务改造</div>
+              <div class="phase-desc">核心系统全链路<br>密码防护落地</div>
+              <div style="font-size:10px;color:var(--text-secondary);margin-top:6px;">12–18 个月</div>
+            </div>
+            <div class="phase-block">
+              <div class="phase-num">Ⅲ</div>
+              <div class="phase-title">全域全覆盖</div>
+              <div class="phase-desc">边缘 · 物联网 · 第三方<br>对接系统改造</div>
+              <div style="font-size:10px;color:var(--text-secondary);margin-top:6px;">12–18 个月</div>
+            </div>
+            <div class="phase-block">
+              <div class="phase-num">Ⅳ</div>
+              <div class="phase-title">迭代优化</div>
+              <div class="phase-desc">抗量子升级<br>密码智能化运营</div>
+              <div style="font-size:10px;color:var(--text-secondary);margin-top:6px;">持续演进</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Panel: 架构视图 -->
+    <div class="tab-panel" id="tab-arch">
+      <div class="section-card" style="border-left:4px solid #2d5f8a;">
+        <div class="card-body">
+          <h4>🏗️ 总体架构分层模型</h4>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
+            <div class="arch-layer" style="background:#fce4ec;border-left-color:#c62828;"><strong style="color:#c62828;">第四层 · 运营管理层</strong><span class="layer-detail">密码审计 · SIEM联动 · 态势感知 · 密评常态化 · 应急响应</span></div>
+            <div class="arch-layer" style="background:#fff3e0;border-left-color:#e65100;"><strong style="color:#e65100;">第三层 · 业务应用层</strong><span class="layer-detail">身份认证（国密双因子） · 传输加密（国密SSL/TLS/IPSec） · 存储加密（TDE/字段加密） · API签名验签 · 运维认证</span></div>
+            <div class="arch-layer" style="background:#e8f5e9;border-left-color:#2e7d32;"><strong style="color:#2e7d32;">第二层 · 密码中台层（核心枢纽）</strong><span class="layer-detail">统一密码抽象API · KMS密钥管理 · PKI/SM9证书服务 · 密码调度与流量管控 · 高可用/容灾</span></div>
+            <div class="arch-layer" style="background:#e3f2fd;border-left-color:#1565c0;"><strong style="color:#1565c0;">第一层 · 基础设施层</strong><span class="layer-detail">HSM密码机集群 · 云密码资源池 · 终端安全载体（USBKey/SE/TF卡） · 边缘轻量化密码硬件</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第一章 ═══════════ -->
+    <div class="section-card part-I" id="ch1" data-part="part1" data-chapter="1">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">1</div>
+        <div class="card-title"><h3>项目概述</h3><div class="eng">Project Overview</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>1.1 建设背景与现状</h4>
+        <ul>
+          <li>《密码法》《商用密码管理条例》等法律法规强制要求关键信息基础设施采用商用密码进行保护</li>
+          <li>等保2.0、关基安全保护条例明确密码技术作为核心安全手段</li>
+          <li>当前多数信息系统仍大量使用RSA、AES等境外密码算法，存在合规风险与供应链安全隐患</li>
+          <li>量子计算威胁日益临近，需从顶层设计维度预留抗量子密码兼容能力</li>
+        </ul>
+        <h4>1.2 建设范围</h4>
+        <ul>
+          <li><strong>IT资产：</strong>服务器、网络设备、安全设备、存储系统</li>
+          <li><strong>业务系统：</strong>核心业务平台、办公系统、邮件系统、财务系统</li>
+          <li><strong>终端：</strong>办公终端、移动终端、自助设备</li>
+          <li><strong>物联网：</strong>传感器、摄像头、工控设备</li>
+          <li><strong>第三方对接：</strong>外部API接口、合作伙伴系统互联</li>
+        </ul>
+        <h4>1.3 建设目标</h4>
+        <ul>
+          <li><span class="tag tag-law">合规</span> 满足密码法、密评、等保2.0、关基安全监管要求</li>
+          <li><span class="tag tag-tech">安全</span> 实现全域身份可信、传输保密、存储加密、操作不可否认</li>
+          <li><span class="tag tag-mgmt">业务兼容</span> 密码改造对现有业务系统影响最小化，保障业务连续性</li>
+          <li><span class="tag tag-future">长期演进</span> 构建密码敏捷架构，支持算法平滑升级与抗量子迁移</li>
+        </ul>
+        <h4>1.4 建设原则</h4>
+        <ul>
+          <li><strong>合规先行、国密统一：</strong>全面采用SM2/SM3/SM4/SM9国密算法体系</li>
+          <li><strong>密码解耦、敏捷迭代：</strong>密码能力与业务逻辑分离，通过统一API调用</li>
+          <li><strong>最小权限：</strong>密钥管理与使用权限遵循最小化原则</li>
+          <li><strong>全链路覆盖：</strong>身份→传输→存储→接口→运维全链路密码保护</li>
+          <li><strong>可审计可运维：</strong>全量密码操作可追溯，支持日常运维与应急响应</li>
+          <li><strong>抗量子兼容预留：</strong>密码接口设计预留PQC算法扩展能力</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第二章 ═══════════ -->
+    <div class="section-card part-I" id="ch2" data-part="part1" data-chapter="2">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">2</div>
+        <div class="card-title"><h3>政策与标准依据</h3><div class="eng">Policy & Standards Basis</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>2.1 法律法规</h4>
+        <ul>
+          <li><span class="tag tag-law">法律</span> 《中华人民共和国密码法》（2020年1月1日施行）</li>
+          <li><span class="tag tag-law">法规</span> 《商用密码管理条例》（2023年修订版）</li>
+          <li><span class="tag tag-law">法律</span> 《中华人民共和国网络安全法》</li>
+          <li><span class="tag tag-law">法律</span> 《中华人民共和国数据安全法》</li>
+          <li><span class="tag tag-law">法律</span> 《中华人民共和国个人信息保护法》</li>
+          <li><span class="tag tag-law">法规</span> 《关键信息基础设施安全保护条例》</li>
+        </ul>
+        <h4>2.2 国家标准</h4>
+        <ul>
+          <li><span class="tag tag-std">国标</span> GB/T 39786-2021《信息安全技术 信息系统密码应用基本要求》</li>
+          <li><span class="tag tag-std">国标</span> GB/T 43207-2023《信息安全技术 信息系统密码应用设计指南》</li>
+          <li><span class="tag tag-std">国标</span> GB/T 22239-2019《信息安全技术 网络安全等级保护基本要求》（等保2.0）</li>
+          <li><span class="tag tag-std">国标</span> GB/T 39204-2020《信息安全技术 关键信息基础设施安全保护要求》</li>
+        </ul>
+        <h4>2.3 商用密码行业标准（GM/T系列）</h4>
+        <ul>
+          <li>GM/T 0003 SM2椭圆曲线公钥密码算法系列</li>
+          <li>GM/T 0004 SM3密码杂凑算法</li>
+          <li>GM/T 0002 SM4分组密码算法</li>
+          <li>GM/T 0044 SM9标识密码算法</li>
+          <li>GM/T 0054 信息系统密码应用基本要求</li>
+          <li>GM/T 0051 密码设备管理规范</li>
+        </ul>
+        <h4>2.4 行业专项规范</h4>
+        <ul>
+          <li><strong>金融：</strong>JR/T 0171-2020 金融领域密码应用要求</li>
+          <li><strong>政务：</strong>国办电子政务密码应用指南</li>
+          <li><strong>能源：</strong>电力监控系统密码应用要求</li>
+          <li><strong>医疗：</strong>健康医疗大数据密码应用规范</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第三章 ═══════════ -->
+    <div class="section-card part-I" id="ch3" data-part="part1" data-chapter="3">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">3</div>
+        <div class="card-title"><h3>现状调研与风险分析</h3><div class="eng">Current State Assessment & Risk Analysis</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>3.1 全域资产梳理</h4>
+        <ul>
+          <li><strong>系统资产：</strong>业务系统、中间件、数据库、容器平台</li>
+          <li><strong>数据资产：</strong>结构化数据库、非结构化文件、日志数据、备份数据</li>
+          <li><strong>终端资产：</strong>PC、笔记本、移动终端、IoT设备</li>
+          <li><strong>网络资产：</strong>路由器、交换机、防火墙、VPN网关</li>
+          <li><strong>硬件密码资产：</strong>现有密码机、加密卡、USBKey数量与型号</li>
+        </ul>
+        <h4>3.2 数据分级分类</h4>
+        <ul>
+          <li><strong>核心敏感数据：</strong>用户身份信息、鉴权凭证、交易记录、密钥材料</li>
+          <li><strong>一般业务数据：</strong>业务流程数据、配置文件、运维脚本</li>
+          <li><strong>日志审计数据：</strong>操作日志、访问日志、安全事件记录</li>
+        </ul>
+        <h4>3.3 现有密码应用现状摸底</h4>
+        <ul>
+          <li>密码算法使用情况排查（是否使用国密算法）</li>
+          <li>密钥存储与传输方式（是否存在明文存储、硬编码密钥）</li>
+          <li>数字证书体系现状（CA来源、证书格式、吊销机制）</li>
+          <li>密码设备合规性（是否具备国密型号认证）</li>
+        </ul>
+        <h4>3.4 密码专项风险评估</h4>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+            <thead>
+              <tr style="background:#fde8ec;">
+                <th style="padding:10px;text-align:left;">风险类别</th><th style="padding:10px;text-align:left;">典型问题</th><th style="padding:10px;text-align:center;">风险等级</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:8px 10px;">算法不合规</td><td style="padding:8px 10px;">使用RSA/SHA-256等非国密算法</td><td style="padding:8px 10px;text-align:center;color:var(--accent);">🔴 高</td></tr>
+              <tr><td style="padding:8px 10px;">密钥裸存</td><td style="padding:8px 10px;">密钥以明文形式存储在配置文件/代码中</td><td style="padding:8px 10px;text-align:center;color:var(--accent);">🔴 高</td></tr>
+              <tr><td style="padding:8px 10px;">无数字签名</td><td style="padding:8px 10px;">关键操作未进行数字签名，不可追溯</td><td style="padding:8px 10px;text-align:center;color:#e65100;">🟠 中</td></tr>
+              <tr><td style="padding:8px 10px;">密钥管理缺失</td><td style="padding:8px 10px;">无统一KMS，密钥分散管理，无轮换机制</td><td style="padding:8px 10px;text-align:center;color:var(--accent);">🔴 高</td></tr>
+              <tr><td style="padding:8px 10px;">信任体系缺失</td><td style="padding:8px 10px;">无内部CA、证书过期未更新</td><td style="padding:8px 10px;text-align:center;color:#e65100;">🟠 中</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>3.5 风险分级与整改优先级</h4>
+        <p style="font-size:13px;color:var(--text-secondary);">基于风险矩阵（可能性×影响度），将整改任务分为<strong style="color:var(--accent);">立即整改（0-3月）</strong>、<strong style="color:#e65100;">限期整改（3-6月）</strong>、<strong style="color:#2e7d32;">规划整改（6-12月）</strong>三个优先级。</p>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第四章 ═══════════ -->
+    <div class="section-card part-I" id="ch4" data-part="part1" data-chapter="4">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">4</div>
+        <div class="card-title"><h3>总体安全架构与设计思路</h3><div class="eng">Overall Security Architecture</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>4.1 总体架构分层模型</h4>
+        <div style="display:flex;flex-direction:column;gap:6px;margin:12px 0;">
+          <div class="arch-layer" style="background:#fce4ec;border-left-color:#c62828;"><strong style="color:#c62828;">运营管理层</strong><span class="layer-detail">密码审计 · SIEM联动 · 态势感知 · 密评常态化</span></div>
+          <div class="arch-layer" style="background:#fff3e0;border-left-color:#e65100;"><strong style="color:#e65100;">业务应用层</strong><span class="layer-detail">身份认证 · 传输加密 · 存储加密 · 接口保护 · 运维安全</span></div>
+          <div class="arch-layer" style="background:#e8f5e9;border-left-color:#2e7d32;"><strong style="color:#2e7d32;">密码中台层</strong><span class="layer-detail">统一API · KMS密钥管理 · PKI/SM9证书服务 · 密码调度</span></div>
+          <div class="arch-layer" style="background:#e3f2fd;border-left-color:#1565c0;"><strong style="color:#1565c0;">基础设施层</strong><span class="layer-detail">HSM集群 · 云密码资源 · 终端载体 · 边缘硬件</span></div>
+        </div>
+        <h4>4.2 密码能力全域覆盖逻辑图</h4>
+        <p style="font-size:13px;color:var(--text-secondary);">
+          以密码中台为核心枢纽，向上为各类业务应用提供统一的密码服务API；向下适配多种密码硬件设备（HSM、云密码机、终端安全芯片）；向左对接现有安全体系（等保、零信任、态势感知）；向右预留后量子密码扩展接口。
+        </p>
+        <h4>4.3 与现有安全体系融合方案</h4>
+        <ul>
+          <li><strong>等保2.0融合：</strong>密码要求作为等保三级及以上系统的强制控制点</li>
+          <li><strong>零信任融合：</strong>以国密证书作为设备与用户身份凭证，实现持续信任评估</li>
+          <li><strong>态势感知融合：</strong>密码操作日志接入SIEM/SOAR平台，实现密码异常行为实时告警</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第五章 ═══════════ -->
+    <div class="section-card part-II" id="ch5" data-part="part2" data-chapter="5">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">5</div>
+        <div class="card-title"><h3>密码基础设施底座设计</h3><div class="eng">Cryptographic Infrastructure Foundation</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>5.1 硬件密码资源池规划</h4>
+        <p style="font-size:13px;font-weight:700;color:var(--primary);">5.1.1 密码机/HSM密钥管理机部署架构</p>
+        <ul>
+          <li><strong>主中心：</strong>双机热备部署，支持SM2/SM3/SM4/SM9全算法硬件加速</li>
+          <li><strong>同城灾备：</strong>异步复制密钥材料，RPO &lt; 5分钟</li>
+          <li><strong>异地灾备：</strong>密钥加密备份定期同步，满足两地三中心架构要求</li>
+          <li><strong>集群负载均衡：</strong>前端负载均衡器分发密码运算请求，支持弹性扩容</li>
+        </ul>
+        <p style="font-size:13px;font-weight:700;color:var(--primary);">5.1.2 终端密码载体选型规范</p>
+        <ul>
+          <li><strong>USBKey：</strong>支持SM2/SM3/SM4，具备国密二级及以上安全芯片认证</li>
+          <li><strong>安全SE芯片：</strong>用于移动终端、IoT设备，支持SM9标识密码</li>
+          <li><strong>TF密码卡：</strong>用于监控摄像头、工控终端等嵌入式场景</li>
+        </ul>
+        <p style="font-size:13px;font-weight:700;color:var(--primary);">5.1.3 云/虚拟化密码资源</p>
+        <ul>
+          <li><strong>云密码机：</strong>虚拟化HSM实例，支持VMware/KVM/容器化部署</li>
+          <li><strong>边缘轻量化方案：</strong>软密码模块，适用于带宽受限、低功耗IoT场景</li>
+        </ul>
+        <h4>5.2 密码设备准入标准</h4>
+        <ul>
+          <li>所有密码设备须取得<strong>国家密码管理局商用密码产品型号认证</strong></li>
+          <li>安全芯片须通过国密二级/EAL4+及以上认证</li>
+          <li>密码设备须支持GM/T 0018密码设备应用接口规范</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第六章 ═══════════ -->
+    <div class="section-card part-II" id="ch6" data-part="part2" data-chapter="6">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">6</div>
+        <div class="card-title"><h3>统一密码服务中台（核心枢纽）</h3><div class="eng">Unified Cryptographic Service Platform</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>6.1 中台整体架构</h4>
+        <p style="font-size:13px;color:var(--text-secondary);">
+          密码中台作为单位全域密码能力的统一调度与输出中心，对上提供标准化、多语言的密码API，对下适配异构密码硬件设备，实现业务系统与密码实现的解耦。
+        </p>
+        <h4>6.2 统一密码抽象API服务</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+          <thead>
+            <tr style="background:var(--bg);">
+              <th style="padding:10px;text-align:left;">API类别</th><th style="padding:10px;text-align:left;">接口功能</th><th style="padding:10px;text-align:left;">支持算法</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:8px 10px;">加密/解密</td><td style="padding:8px 10px;">对称加密、非对称加密</td><td style="padding:8px 10px;">SM2, SM4</td></tr>
+            <tr><td style="padding:8px 10px;">签名/验签</td><td style="padding:8px 10px;">数字签名生成与验证</td><td style="padding:8px 10px;">SM2, SM9</td></tr>
+            <tr><td style="padding:8px 10px;">哈希</td><td style="padding:8px 10px;">消息摘要、HMAC</td><td style="padding:8px 10px;">SM3</td></tr>
+            <tr><td style="padding:8px 10px;">密钥协商</td><td style="padding:8px 10px;">密钥交换协议</td><td style="padding:8px 10px;">SM2, SM9</td></tr>
+            <tr><td style="padding:8px 10px;">随机数</td><td style="padding:8px 10px;">真随机数生成</td><td style="padding:8px 10px;">GM/T 0006</td></tr>
+          </tbody>
+        </table>
+        <h4>6.3 高可用、容灾与扩容设计</h4>
+        <ul>
+          <li><strong>多活部署：</strong>至少两个数据中心同时提供服务，单中心故障自动切换</li>
+          <li><strong>弹性扩容：</strong>基于容器化部署，按密码运算负载自动扩缩容</li>
+          <li><strong>流量管控：</strong>API网关实现限流、熔断、降级，保障核心业务优先</li>
+        </ul>
+        <h4>6.4 密码能力调度与性能优化</h4>
+        <ul>
+          <li>密码运算请求优先级队列：核心业务 &gt; 一般业务 &gt; 批量任务</li>
+          <li>会话密钥缓存机制，减少HSM调用频次</li>
+          <li>支持批量签名/验签，优化高吞吐场景性能</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第七章 ═══════════ -->
+    <div class="section-card part-II" id="ch7" data-part="part2" data-chapter="7">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">7</div>
+        <div class="card-title"><h3>密钥全生命周期管理（KMS系统顶层设计）</h3><div class="eng">Key Lifecycle Management — KMS Top-level Design</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>7.1 密钥分层体系</h4>
+        <div style="display:flex;flex-direction:column;gap:6px;margin:12px 0;">
+          <div class="key-layer" style="background:#fce4ec;"><strong style="color:#c62828;">根密钥（Root Key）</strong><span class="key-desc">离线存储于HSM内部 · 多人共管 · 仅用于加密保护业务主密钥</span></div>
+          <div class="key-layer" style="background:#fff3e0;"><strong style="color:#e65100;">业务主密钥（Master Key）</strong><span class="key-desc">按业务域隔离 · 由根密钥加密保护 · 用于派生数据密钥</span></div>
+          <div class="key-layer" style="background:#e8f5e9;"><strong style="color:#2e7d32;">数据密钥（Data Key）</strong><span class="key-desc">面向具体加密对象 · 定期轮换 · 由业务主密钥加密保护</span></div>
+          <div class="key-layer" style="background:#e3f2fd;"><strong style="color:#1565c0;">会话密钥（Session Key）</strong><span class="key-desc">临时性 · 单次会话有效 · 用完即销毁</span></div>
+        </div>
+        <h4>7.2 密钥全生命周期流程</h4>
+        <div class="lifecycle-steps">
+          <span class="step">① 生成（HSM真随机）</span><span class="arrow">→</span>
+          <span class="step">② 分发（加密传输）</span><span class="arrow">→</span>
+          <span class="step">③ 存储（加密保护）</span><span class="arrow">→</span>
+          <span class="step">④ 使用（API调用）</span><span class="arrow">→</span>
+          <span class="step">⑤ 轮换（自动周期）</span><span class="arrow">→</span>
+          <span class="step">⑥ 备份（异地加密）</span><span class="arrow">→</span>
+          <span class="step">⑦ 销毁（安全擦除）</span><span class="arrow">→</span>
+          <span class="step">⑧ 审计（全程记录）</span>
+        </div>
+        <h4>7.3 根密钥离线托管与多人共管</h4>
+        <ul>
+          <li>根密钥采用<strong>M-of-N门限分片</strong>机制（如3/5方案）</li>
+          <li>密钥分片分别存储于不同物理介质的智能卡中，独立保管</li>
+          <li>根密钥恢复需在双人监督、审计录像环境下完成</li>
+        </ul>
+        <h4>7.4 密钥自动轮换策略</h4>
+        <ul>
+          <li><strong>数据密钥：</strong>默认90天自动轮换，支持按数据敏感级别自定义周期</li>
+          <li><strong>业务主密钥：</strong>每年轮换一次，轮换期间新旧密钥共存以保证解密历史数据</li>
+          <li><strong>根密钥：</strong>每3-5年评估轮换必要性，重大安全事件后强制更新</li>
+        </ul>
+        <h4>7.5 密钥泄露应急处置</h4>
+        <ul>
+          <li>发现泄露 → 立即吊销受影响密钥 → 启动应急加密通道重新分发新密钥</li>
+          <li>使用旧密钥加密的数据批量重加密</li>
+          <li>事件全流程记录，72小时内完成初步安全评估报告</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第八章 ═══════════ -->
+    <div class="section-card part-II" id="ch8" data-part="part2" data-chapter="8">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">8</div>
+        <div class="card-title"><h3>全域信任体系（PKI + SM9双模）</h3><div class="eng">Trust Infrastructure — PKI & SM9 Dual-Mode</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>8.1 分级CA证书体系</h4>
+        <div style="display:flex;flex-direction:column;gap:6px;margin:12px 0;">
+          <div style="padding:14px;background:#fce4ec;border-radius:6px;text-align:center;">
+            <strong style="color:#c62828;">根CA（离线）</strong>
+            <div style="font-size:11px;color:var(--text-secondary);">自签根证书 · 物理隔离 · 仅在签发二级CA时临时连线</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;padding:12px;background:#fff3e0;border-radius:6px;text-align:center;">
+              <strong style="color:#e65100;">二级CA · 人员</strong>
+              <div style="font-size:11px;color:var(--text-secondary);">用户身份证书</div>
+            </div>
+            <div style="flex:1;padding:12px;background:#e8f5e9;border-radius:6px;text-align:center;">
+              <strong style="color:#2e7d32;">二级CA · 设备</strong>
+              <div style="font-size:11px;color:var(--text-secondary);">服务器/终端证书</div>
+            </div>
+            <div style="flex:1;padding:12px;background:#e3f2fd;border-radius:6px;text-align:center;">
+              <strong style="color:#1565c0;">二级CA · 应用</strong>
+              <div style="font-size:11px;color:var(--text-secondary);">代码签名/API证书</div>
+            </div>
+          </div>
+        </div>
+        <h4>8.2 SM9标识密码体系</h4>
+        <ul>
+          <li>适用于<strong>物联网设备、移动APP、低功耗终端</strong>等无法承载完整PKI证书链的场景</li>
+          <li>以设备ID/用户手机号/邮箱等作为公钥，无需证书交换</li>
+          <li>KGC（密钥生成中心）集中管理SM9系统参数与用户私钥</li>
+        </ul>
+        <h4>8.3 证书全生命周期管理</h4>
+        <ul>
+          <li><strong>签发：</strong>RA注册审核 → CA签发 → 安全下发至终端载体</li>
+          <li><strong>更新：</strong>到期前30天自动提醒，支持在线更新</li>
+          <li><strong>吊销：</strong>CRL定期发布（&lt;24h）+ OCSP实时查询</li>
+        </ul>
+        <h4>8.4 跨机构/跨域证书互认</h4>
+        <ul>
+          <li>桥CA模式实现跨机构PKI互信</li>
+          <li>SM9跨域方案：KGC间通过SM2建立安全通道，交换系统参数</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第九章 ═══════════ -->
+    <div class="section-card part-II" id="ch9" data-part="part2" data-chapter="9">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">9</div>
+        <div class="card-title"><h3>全域密码应用分层防护设计</h3><div class="eng">Layered Cryptographic Protection Design</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>9.1 身份接入层</h4>
+        <ul>
+          <li><strong>国密双因子认证：</strong>USBKey（SM2证书）+ PIN码 / 生物特征</li>
+          <li><strong>零信任密码改造：</strong>以国密证书为身份凭证，每次访问均进行签名认证</li>
+          <li><strong>单点登录（SSO）：</strong>基于SM2签名的统一认证票据</li>
+        </ul>
+        <h4>9.2 网络传输层</h4>
+        <ul>
+          <li><strong>国密SSL/TLS：</strong>使用SM2签名证书 + SM4对称加密的国密套件</li>
+          <li><strong>国密IPSec VPN：</strong>站点到站点隧道使用SM3认证 + SM4加密</li>
+          <li><strong>物联网国密通道：</strong>基于SM9的轻量化端到端加密</li>
+        </ul>
+        <h4>9.3 数据存储层</h4>
+        <ul>
+          <li><strong>数据库透明加密（TDE）：</strong>数据库文件级SM4加密，对应用透明</li>
+          <li><strong>敏感字段加密：</strong>身份证号、手机号等敏感列应用层SM4加密</li>
+          <li><strong>文件加密：</strong>重要文档/配置文件SM4加密存储</li>
+          <li><strong>完整性校验：</strong>关键配置文件SM3哈希存证，定期比对</li>
+        </ul>
+        <h4>9.4 接口交互层</h4>
+        <ul>
+          <li>API调用采用<strong>SM2签名 + 时间戳 + 随机数</strong>防重放机制</li>
+          <li>请求体SM3哈希，确保传输完整性</li>
+          <li>敏感接口返回数据SM4加密</li>
+        </ul>
+        <h4>9.5 运维管理层</h4>
+        <ul>
+          <li>远程运维采用国密证书双向认证</li>
+          <li>操作命令SM2签名后方可执行</li>
+          <li>操作日志SM3哈希链式存证，防篡改</li>
+        </ul>
+        <h4>9.6 工业/物联网专项</h4>
+        <ul>
+          <li>轻量化SM9标识密码，无需证书交换</li>
+          <li>SM4-CTR模式适应流式数据加密</li>
+          <li>支持CoAP/MQTT协议国密扩展</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十章 ═══════════ -->
+    <div class="section-card part-II" id="ch10" data-part="part2" data-chapter="10">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">10</div>
+        <div class="card-title"><h3>密码审计与安全态势联动</h3><div class="eng">Crypto Audit & Security Situational Awareness</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>10.1 全量密码操作日志采集</h4>
+        <ul>
+          <li>日志涵盖：密钥生成/使用/销毁、证书签发/吊销、加密/解密/签名/验签操作</li>
+          <li>日志格式遵循<strong>GM/T 0054</strong>密码应用日志规范</li>
+          <li>日志实时上报至集中日志平台，保留期≥6个月（关基≥12个月）</li>
+        </ul>
+        <h4>10.2 密钥异常行为告警规则</h4>
+        <ul>
+          <li>短时间内大量密钥生成请求 → 可能密钥泄露后批量替换</li>
+          <li>非工作时间根密钥操作 → 高度可疑</li>
+          <li>证书吊销激增 → 可能遭受大规模攻击</li>
+          <li>密钥使用频次异常偏离基线 → 可能密码服务被滥用</li>
+        </ul>
+        <h4>10.3 与SIEM/堡垒机/审计系统对接</h4>
+        <ul>
+          <li>通过Syslog/Kafka接口将密码操作日志推送至SIEM平台</li>
+          <li>堡垒机操作日志与密码操作日志关联分析</li>
+          <li>关键密码事件自动触发SOAR剧本响应</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十一章 ═══════════ -->
+    <div class="section-card part-III" id="ch11" data-part="part3" data-chapter="11">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">11</div>
+        <div class="card-title"><h3>密码算法选型顶层规范</h3><div class="eng">Algorithm Selection Top-level Specification</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>11.1 强制国密算法基线</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+          <thead>
+            <tr style="background:var(--bg);">
+              <th style="padding:10px;">算法</th><th style="padding:10px;">数字签名</th><th style="padding:10px;">密钥交换</th><th style="padding:10px;">加密/解密</th><th style="padding:10px;">哈希/完整性</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:8px;text-align:center;font-weight:700;">SM2</td><td style="text-align:center;">✅ 首选</td><td style="text-align:center;">✅ 首选</td><td style="text-align:center;">✅</td><td style="text-align:center;">—</td></tr>
+            <tr><td style="padding:8px;text-align:center;font-weight:700;">SM3</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:center;">✅ 唯一</td></tr>
+            <tr><td style="padding:8px;text-align:center;font-weight:700;">SM4</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:center;">✅ 首选</td><td style="text-align:center;">—</td></tr>
+            <tr><td style="padding:8px;text-align:center;font-weight:700;">SM9</td><td style="text-align:center;">✅ IoT</td><td style="text-align:center;">✅ IoT</td><td style="text-align:center;">✅ IoT</td><td style="text-align:center;">—</td></tr>
+          </tbody>
+        </table>
+        <h4>11.2 禁用/限用境外算法清单</h4>
+        <ul>
+          <li><strong>禁用于新建系统：</strong>RSA（所有长度）、SHA-1/256、ECDSA、EdDSA</li>
+          <li><strong>限用于过渡期（存量系统）：</strong>AES-256（需报备，3年内替换为SM4）</li>
+        </ul>
+        <h4>11.3 随机数发生器合规要求</h4>
+        <ul>
+          <li>须符合<strong>GM/T 0006-2012</strong>《密码应用标识规范》随机数要求</li>
+          <li>使用经国密认证的硬件随机数发生器</li>
+          <li>禁止使用软件伪随机数算法作为唯一熵源</li>
+        </ul>
+        <h4>11.4 后量子密码兼容预留设计</h4>
+        <ul>
+          <li>密码API接口设计支持<strong>算法标识扩展</strong>，预留PQC算法OID空间</li>
+          <li>密钥封装机制（KEM）接口抽象，支持ML-KEM（Kyber）等格基算法</li>
+          <li>证书格式扩展：X.509 v3扩展字段预留PQC算法参数</li>
+          <li>混合证书模式（传统SM2 + PQC），为平滑迁移提供技术基础</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十二章 ═══════════ -->
+    <div class="section-card part-III" id="ch12" data-part="part3" data-chapter="12">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">12</div>
+        <div class="card-title"><h3>密码产品选型与集成规范</h3><div class="eng">Product Selection & Integration Standards</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>12.1 密码产品准入标准</h4>
+        <ul>
+          <li><strong>密码机/HSM：</strong>须取得国密局型号认证，支持SM2/SM3/SM4/SM9</li>
+          <li><strong>KMS系统：</strong>须支持GM/T 0051密钥管理规范</li>
+          <li><strong>CA系统：</strong>须支持GM/T 0015数字证书格式规范</li>
+          <li><strong>安全终端：</strong>USBKey须通过国密二级认证</li>
+        </ul>
+        <h4>12.2 业务系统密码集成开发规范</h4>
+        <ul>
+          <li><strong>禁止硬编码密钥：</strong>所有密钥必须通过密码中台API获取</li>
+          <li><strong>统一调用中台接口：</strong>禁止业务系统直接调用密码机底层接口</li>
+          <li><strong>强制国密算法：</strong>新建系统禁止使用非国密算法</li>
+          <li><strong>异常处理规范：</strong>密码服务不可用时的业务降级与重试策略</li>
+        </ul>
+        <h4>12.3 第三方厂商密码集成约束</h4>
+        <ul>
+          <li>第三方系统接入须通过<strong>密码合规审查</strong></li>
+          <li>外部对接须使用本单位颁发的国密证书</li>
+          <li>第三方不得自行管理密钥，必须调用单位KMS服务</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十三章 ═══════════ -->
+    <div class="section-card part-IV" id="ch13" data-part="part4" data-chapter="13">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">13</div>
+        <div class="card-title"><h3>密码组织与岗位职责</h3><div class="eng">Organization & Role Definitions</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>13.1 密码工作领导小组架构</h4>
+        <ul>
+          <li><strong>组长：</strong>单位主要负责人（一把手）</li>
+          <li><strong>副组长：</strong>信息安全分管领导 + 信息技术分管领导</li>
+          <li><strong>成员：</strong>各业务部门负责人、安全部门负责人</li>
+        </ul>
+        <h4>13.2 专职密码岗位权责</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+          <thead>
+            <tr style="background:var(--bg);">
+              <th style="padding:10px;">岗位</th><th style="padding:10px;">主要职责</th><th style="padding:10px;">不得兼任</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:8px;">密码负责人</td><td style="padding:8px;">统筹密码体系建设，审批密钥策略</td><td style="padding:8px;">—</td></tr>
+            <tr><td style="padding:8px;">KMS管理员</td><td style="padding:8px;">KMS系统运维、密钥策略配置</td><td style="padding:8px;">密钥保管员</td></tr>
+            <tr><td style="padding:8px;">密钥保管员</td><td style="padding:8px;">根密钥分片保管、密钥恢复操作</td><td style="padding:8px;">KMS管理员</td></tr>
+            <tr><td style="padding:8px;">密码审计员</td><td style="padding:8px;">密码操作审计、风险巡检</td><td style="padding:8px;">KMS管理员、密钥保管员</td></tr>
+          </tbody>
+        </table>
+        <h4>13.3 岗位分离制度</h4>
+        <ul>
+          <li>KMS管理员、密钥保管员、密码审计员<strong>三岗分设、互为监督</strong></li>
+          <li>关键操作须双人临场、审计录像</li>
+          <li>定期轮岗（建议2年）、离岗交接审计</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十四章 ═══════════ -->
+    <div class="section-card part-IV" id="ch14" data-part="part4" data-chapter="14">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">14</div>
+        <div class="card-title"><h3>全套密码管理制度框架</h3><div class="eng">Management Policy Framework</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>14.1 基础管理制度</h4>
+        <ul>
+          <li>《密码工作管理总则》— 密码工作根本性管理文件</li>
+          <li>《密码产品采购与运维规范》— 采购审批、到货验收、定期巡检</li>
+        </ul>
+        <h4>14.2 密钥专项制度</h4>
+        <ul>
+          <li>《密钥全生命周期管理办法》— 覆盖生成、分发、存储、使用、轮换、备份、销毁全过程</li>
+          <li>《密钥安全等级划分标准》— 按保护数据敏感级别划分密钥等级</li>
+        </ul>
+        <h4>14.3 人员管理制度</h4>
+        <ul>
+          <li>《密码岗位人员保密管理规定》</li>
+          <li>《密码岗位背景审查与定期培训考核制度》</li>
+        </ul>
+        <h4>14.4 审计管理制度</h4>
+        <ul>
+          <li>《密码操作审计管理规定》</li>
+          <li>《密码安全风险巡检管理规定》</li>
+        </ul>
+        <h4>14.5 应急管理制度</h4>
+        <ul>
+          <li>《密码系统故障应急预案》</li>
+          <li>《密钥泄露应急处置预案》</li>
+          <li>《密码算法安全风险应急预案》</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十五章 ═══════════ -->
+    <div class="section-card part-IV" id="ch15" data-part="part4" data-chapter="15">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">15</div>
+        <div class="card-title"><h3>商用密码应用安全性评估（密评）常态化机制</h3><div class="eng">Regular Cryptographic Security Evaluation</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>15.1 密评流程</h4>
+        <ul>
+          <li><strong>建设前：</strong>方案设计阶段聘请密评机构进行评估，确保方案合规</li>
+          <li><strong>上线前：</strong>系统上线前进行正式密评，获得密评报告后方可投产</li>
+          <li><strong>运行中：</strong>关键系统每年至少进行一次密评</li>
+        </ul>
+        <h4>15.2 年度常态化密评</h4>
+        <ul>
+          <li>年初制定年度密评计划，覆盖所有三级及以上系统</li>
+          <li>密评发现问题纳入整改台账，明确责任人与完成时限</li>
+          <li>整改结果经第三方密评机构复核后闭环销号</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十六章 ═══════════ -->
+    <div class="section-card part-IV" id="ch16" data-part="part4" data-chapter="16">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">16</div>
+        <div class="card-title"><h3>密码人才与培训体系</h3><div class="eng">Talent Development & Training System</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>16.1 持证上岗要求</h4>
+        <ul>
+          <li>密码岗位人员须通过<strong>国家密码管理局商用密码应用安全从业人员考核</strong></li>
+          <li>KMS管理员须取得相应产品厂商认证</li>
+          <li>密码审计员须具备CISP或等保测评资质</li>
+        </ul>
+        <h4>16.2 培训与演练</h4>
+        <ul>
+          <li>全员年度密码安全意识培训（≥4学时）</li>
+          <li>密码岗位专项技能培训（≥16学时/年）</li>
+          <li>每年至少一次密码应急演练（密钥泄露、证书吊销等场景）</li>
+          <li>密码攻防演练（红蓝对抗），验证密码防护有效性</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十七章 ═══════════ -->
+    <div class="section-card part-V" id="ch17" data-part="part5" data-chapter="17">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">17</div>
+        <div class="card-title"><h3>分阶段落地实施规划</h3><div class="eng">Phased Implementation Plan</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>一期：底座搭建（6-12个月）</h4>
+        <ul>
+          <li>部署密码中台、KMS系统、根CA基础设施</li>
+          <li>建设硬件密码资源池（HSM集群）</li>
+          <li>制定密码管理制度体系文件</li>
+          <li>搭建密码审计日志平台</li>
+        </ul>
+        <h4>二期：核心业务改造（12-18个月）</h4>
+        <ul>
+          <li>核心业务系统全链路密码防护落地（身份认证→传输加密→存储加密→接口签名）</li>
+          <li>内部用户全面发放国密USBKey</li>
+          <li>核心数据库TDE透明加密改造</li>
+          <li>内部SSL/TLS全面切换为国密套件</li>
+        </ul>
+        <h4>三期：全域全覆盖（12-18个月）</h4>
+        <ul>
+          <li>边缘系统、物联网设备、第三方对接系统全面改造</li>
+          <li>SM9标识密码在IoT场景规模化部署</li>
+          <li>跨机构证书互认体系建设</li>
+        </ul>
+        <h4>四期：迭代优化（持续演进）</h4>
+        <ul>
+          <li>后量子密码算法评估与试点迁移</li>
+          <li>密码智能化运营（AI驱动异常检测）</li>
+          <li>参与行业/国家密码标准制定，输出最佳实践</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十八章 ═══════════ -->
+    <div class="section-card part-V" id="ch18" data-part="part5" data-chapter="18">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">18</div>
+        <div class="card-title"><h3>项目资源与预算概算</h3><div class="eng">Resources & Budget Estimation</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>18.1 硬件密码设备采购</h4>
+        <ul><li>密码机/HSM、国密USBKey、安全SE芯片模块、密码卡等</li></ul>
+        <h4>18.2 密码软件与平台授权</h4>
+        <ul><li>KMS系统、CA系统、密码中台平台、API网关许可</li></ul>
+        <h4>18.3 实施服务与咨询</h4>
+        <ul><li>系统集成实施、密评服务、专家咨询、第三方安全评测</li></ul>
+        <h4>18.4 年度运维与升级</h4>
+        <ul><li>设备维保、软件升级、人员培训、年度密评</li></ul>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:12px;">
+          ⚠️ 具体金额需根据单位规模、系统数量、设备选型逐项核算，此处仅列预算科目框架。
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第十九章 ═══════════ -->
+    <div class="section-card part-V" id="ch19" data-part="part5" data-chapter="19">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">19</div>
+        <div class="card-title"><h3>上线后常态化运维方案</h3><div class="eng">Ongoing Operations Plan</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>19.1 日常运维流程</h4>
+        <ul>
+          <li>密码设备健康检查（日检）</li>
+          <li>密钥使用审计日志审查（周检）</li>
+          <li>证书有效期巡检（月检）</li>
+          <li>密码中台性能容量评估（月检）</li>
+          <li>全量密码安全健康度报告（季度）</li>
+        </ul>
+        <h4>19.2 版本迭代与设备维保</h4>
+        <ul>
+          <li>密码算法库定期更新（跟随GM/T标准演进）</li>
+          <li>密码设备固件升级与维保续期管理</li>
+          <li>密码中台软件版本迭代（季度发布窗口）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第二十章 ═══════════ -->
+    <div class="section-card part-V" id="ch20" data-part="part5" data-chapter="20">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">20</div>
+        <div class="card-title"><h3>风险应急保障方案</h3><div class="eng">Risk & Emergency Response Plan</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>20.1 密码安全事件分级处置</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+          <thead>
+            <tr style="background:#fde8ec;">
+              <th style="padding:10px;">级别</th><th style="padding:10px;">事件类型</th><th style="padding:10px;">响应时限</th><th style="padding:10px;">上报要求</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:8px;color:var(--accent);">🔴 一级</td><td style="padding:8px;">根密钥泄露、根CA私钥泄露</td><td style="padding:8px;">15分钟内启动响应</td><td style="padding:8px;">立即上报密码工作领导小组</td></tr>
+            <tr><td style="padding:8px;color:#e65100;">🟠 二级</td><td style="padding:8px;">业务主密钥泄露、大规模证书吊销</td><td style="padding:8px;">30分钟内启动响应</td><td style="padding:8px;">2小时内上报</td></tr>
+            <tr><td style="padding:8px;color:#f1c40f;">🟡 三级</td><td style="padding:8px;">密码服务中断、证书过期</td><td style="padding:8px;">1小时内启动响应</td><td style="padding:8px;">24小时内上报</td></tr>
+          </tbody>
+        </table>
+        <h4>20.2 应急保障措施</h4>
+        <ul>
+          <li>密码中台多活部署，单中心故障自动切换</li>
+          <li>密钥材料异地加密备份，支持紧急恢复</li>
+          <li>业务降级方案：密码服务不可用时，受控降级为限时缓存凭证模式</li>
+          <li>应急演练每半年至少一次，覆盖密钥泄露、证书吊销、设备故障三类场景</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第二十一章 ═══════════ -->
+    <div class="section-card part-VI" id="ch21" data-part="part6" data-chapter="21">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">21</div>
+        <div class="card-title"><h3>密码体系中长期演进路线</h3><div class="eng">Medium-to-Long Term Evolution Roadmap</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>21.1 抗量子密码平滑迁移规划</h4>
+        <ul>
+          <li><strong>近期（1-2年）：</strong>持续跟踪NIST PQC标准化进展与中国PQC标准制定动态；在密码中台预留PQC算法接口</li>
+          <li><strong>中期（3-5年）：</strong>启动混合证书（SM2 + PQC）试点；评估格基/哈希基算法在现有硬件平台的性能表现</li>
+          <li><strong>远期（5-10年）：</strong>完成核心系统PQC迁移；建立SM2与PQC长期共存、按需切换的敏捷机制</li>
+        </ul>
+        <h4>21.2 密码智能化安全运营建设</h4>
+        <ul>
+          <li>基于UEBA（用户实体行为分析）的密码异常检测</li>
+          <li>AI辅助密钥泄露风险预警</li>
+          <li>自动化密评合规检查与报告生成</li>
+        </ul>
+        <h4>21.3 集团/产业链统一密码互信标准建设</h4>
+        <ul>
+          <li>制定集团级密码互信技术规范</li>
+          <li>推动上下游合作伙伴统一密码接口标准</li>
+          <li>参与行业/国家密码标准的编写与推广</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 第二十二章 ═══════════ -->
+    <div class="section-card part-VI" id="ch22" data-part="part6" data-chapter="22">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num">22</div>
+        <div class="card-title"><h3>预期建设成效</h3><div class="eng">Expected Outcomes</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <h4>22.1 合规层面</h4>
+        <ul>
+          <li>✅ 满足《密码法》《商用密码管理条例》合规要求</li>
+          <li>✅ 通过商用密码应用安全性评估（密评）</li>
+          <li>✅ 满足等保2.0三级及以上系统密码要求</li>
+          <li>✅ 满足关键信息基础设施安全保护密码要求</li>
+        </ul>
+        <h4>22.2 安全层面</h4>
+        <ul>
+          <li>✅ 全域身份可信：内部用户、设备、应用均持国密证书</li>
+          <li>✅ 全链路传输加密：内部网络、外部接口全面国密保护</li>
+          <li>✅ 敏感数据加密存储：核心数据、个人信息强制加密</li>
+          <li>✅ 操作不可否认：关键操作SM2签名，全程可追溯</li>
+        </ul>
+        <h4>22.3 管理层面</h4>
+        <ul>
+          <li>✅ 密钥全生命周期可管可控，杜绝密钥裸存</li>
+          <li>✅ 密码操作全量审计，异常行为实时告警</li>
+          <li>✅ 风险闭环管控：发现→评估→整改→验证→销号</li>
+          <li>✅ 密码能力敏捷输出：新系统接入密码服务 ≤ 3天</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════ 附录 ═══════════ -->
+    <div class="section-card" id="appendix" style="border:1px dashed var(--border);">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-num" style="background:var(--bg);color:var(--text-secondary);">📎</div>
+        <div class="card-title"><h3>附录（附件材料清单）</h3><div class="eng">Appendices</div></div>
+        <div class="card-arrow">▶</div>
+      </div>
+      <div class="card-body">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:6px 0;">附录A</td><td>全域资产与数据分级清单</td></tr>
+          <tr><td style="padding:6px 0;">附录B</td><td>密码风险评估报告摘要</td></tr>
+          <tr><td style="padding:6px 0;">附录C</td><td>密码设备部署拓扑图、架构总图</td></tr>
+          <tr><td style="padding:6px 0;">附录D</td><td>全套密码管理制度文件汇编</td></tr>
+          <tr><td style="padding:6px 0;">附录E</td><td>密评自查清单</td></tr>
+          <tr><td style="padding:6px 0;">附录F</td><td>术语与参考标准全文清单</td></tr>
+          <tr><td style="padding:6px 0;">附录G</td><td>专家评审意见、方案修改记录</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+
+<script>
+// ═══════════ STATE ═══════════
+let expandedChapters = new Set();
+let currentFilter = null;
+
+// ═══════════ SIDEBAR BUILD ═══════════
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  const cards = document.querySelectorAll('.section-card[id]');
+  const parts = {
+    part1: '第一部分 · 总论（规划基线）',
+    part2: '第二部分 · 总体技术架构设计',
+    part3: '第三部分 · 算法与产品规范',
+    part4: '第四部分 · 管理体系顶层设计',
+    part5: '第五部分 · 实施路线、预算与运维',
+    part6: '第六部分 · 长期演进规划',
+  };
+  let currentPart = null;
+  let html = '';
+  cards.forEach(card => {
+    const part = card.dataset.part;
+    if (part && part !== currentPart) {
+      currentPart = part;
+      html += `<div class="part-label">${parts[part] || ''}</div>`;
+    }
+    const ch = card.dataset.chapter || '';
+    const title = card.querySelector('.card-title h3')?.textContent || card.querySelector('.card-title h3')?.innerText || '';
+    if (ch && title) {
+      html += `<a href="#${card.id}" data-ch="${ch}" onclick="scrollToChapter('${card.id}')">
+        <span class="ch-num">第${ch}章</span><span>${title}</span>
+      </a>`;
+    }
+  });
+  // appendix link
+  html += `<a href="#appendix" data-ch="附录" onclick="scrollToChapter('appendix')" style="margin-top:8px;">
+    <span class="ch-num">📎</span><span>附录（附件材料清单）</span>
+  </a>`;
+  nav.innerHTML = html;
+}
+
+// ═══════════ TOGGLE CARD ═══════════
+function toggleCard(header) {
+  const card = header.parentElement;
+  card.classList.toggle('collapsed');
+  const ch = card.dataset.chapter;
+  if (ch) {
+    if (card.classList.contains('collapsed')) {
+      expandedChapters.delete(ch);
+    } else {
+      expandedChapters.add(ch);
+    }
+  }
+  updateProgress();
+}
+
+// ═══════════ EXPAND/COLLAPSE ALL ═══════════
+function expandAll() {
+  document.querySelectorAll('.section-card').forEach(c => {
+    c.classList.remove('collapsed');
+    if (c.dataset.chapter) expandedChapters.add(c.dataset.chapter);
+  });
+  updateProgress();
+}
+
+function collapseAll() {
+  document.querySelectorAll('.section-card').forEach(c => {
+    c.classList.add('collapsed');
+    if (c.dataset.chapter) expandedChapters.delete(c.dataset.chapter);
+  });
+  updateProgress();
+}
+
+// ═══════════ SCROLL TO CHAPTER ═══════════
+function scrollToChapter(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('collapsed');
+  if (el.dataset.chapter) expandedChapters.add(el.dataset.chapter);
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // highlight
+  el.classList.add('highlight');
+  setTimeout(() => el.classList.remove('highlight'), 2000);
+  updateProgress();
+  updateActiveNav(id);
+  // close mobile sidebar
+  closeSidebar();
+}
+
+// ═══════════ ACTIVE NAV ═══════════
+function updateActiveNav(id) {
+  document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+  const link = document.querySelector(`.sidebar-nav a[href="#${id}"]`);
+  if (link) link.classList.add('active');
+}
+
+// ═══════════ PROGRESS ═══════════
+function updateProgress() {
+  const all = document.querySelectorAll('.section-card[data-chapter]');
+  const total = all.length;
+  const open = [...all].filter(c => !c.classList.contains('collapsed')).length;
+  document.getElementById('progressBar').style.width = (open / total * 100) + '%';
+  document.getElementById('progressPercent').textContent = `${open} / ${total} 章`;
+}
+
+// ═══════════ SECTION TRACKING (Intersection Observer) ═══════════
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      updateActiveNav(id);
+      const title = entry.target.querySelector('.card-title h3')?.textContent || '';
+      document.getElementById('currentSection').textContent = title || '总论';
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+
+document.querySelectorAll('.section-card[id]').forEach(card => observer.observe(card));
+
+// ═══════════ BACK TO TOP ═══════════
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('backToTop');
+  if (window.scrollY > 500) {
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
+  }
+});
+
+// ═══════════ SEARCH ═══════════
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => doSearch(e.target.value.trim()), 250);
+});
+
+function doSearch(query) {
+  // Remove previous highlights
+  document.querySelectorAll('.search-highlight').forEach(el => {
+    el.replaceWith(el.textContent);
+  });
+
+  if (!query) {
+    // Reset visibility
+    document.querySelectorAll('.section-card').forEach(c => c.style.display = '');
+    document.querySelectorAll('.no-results').forEach(el => el.remove());
+    return;
+  }
+
+  const lower = query.toLowerCase();
+  let anyVisible = false;
+  document.querySelectorAll('.section-card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    if (text.includes(lower)) {
+      card.style.display = '';
+      card.classList.remove('collapsed');
+      if (card.dataset.chapter) expandedChapters.add(card.dataset.chapter);
+      anyVisible = true;
+      // highlight within body
+      highlightText(card.querySelector('.card-body'), query);
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // No results
+  const existing = document.querySelector('.no-results');
+  if (!anyVisible && !existing) {
+    const msg = document.createElement('div');
+    msg.className = 'no-results';
+    msg.textContent = `未找到匹配 "${query}" 的章节，请尝试其他关键词。`;
+    document.getElementById('content').insertBefore(msg, document.getElementById('content').firstChild);
+  } else if (anyVisible && existing) {
+    existing.remove();
+  }
+
+  updateProgress();
+}
+
+function highlightText(container, query) {
+  if (!container) return;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    const text = node.textContent;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx >= 0) {
+      const span = document.createElement('span');
+      span.innerHTML =
+        text.substring(0, idx) +
+        '<span class="search-highlight">' + text.substring(idx, idx + query.length) + '</span>' +
+        text.substring(idx + query.length);
+      node.replaceWith(span);
+    }
+  });
+}
+
+// ═══════════ TABS ═══════════
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${tabName}"]`)?.classList.add('active');
+  const panel = document.getElementById('tab-' + tabName);
+  if (panel) panel.classList.add('active');
+}
+
+// ═══════════ EXPORT PROGRESS ═══════════
+function exportProgress() {
+  const open = [...document.querySelectorAll('.section-card[data-chapter]')]
+    .filter(c => !c.classList.contains('collapsed'))
+    .map(c => {
+      const ch = c.dataset.chapter;
+      const title = c.querySelector('.card-title h3')?.textContent || '';
+      return `第${ch}章 ${title}`;
+    });
+  const text = `商用密码顶层设计方案 — 阅读进度\n${'='.repeat(40)}\n已阅读章节：\n${open.map(s => '  ✅ ' + s).join('\n')}\n\n共 ${open.length} 章已展开`;
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(() => {
+    alert('进度已复制到剪贴板！');
+  }).catch(() => {
+    alert(text);
+  });
+}
+
+// ═══════════ MOBILE SIDEBAR ═══════════
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const mask = document.getElementById('sidebarMask');
+  const hamburger = document.querySelector('.hamburger');
+  const isOpen = sidebar.classList.toggle('open');
+  mask.classList.toggle('open', isOpen);
+  hamburger.classList.toggle('open', isOpen);
+  // Lock body scroll when sidebar is open on mobile
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarMask').classList.remove('open');
+  document.querySelector('.hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ═══════════ KEYBOARD SHORTCUTS ═══════════
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('searchInput').value = '';
+    doSearch('');
+    document.getElementById('searchInput').blur();
+  }
+});
+
+// ═══════════ INIT ═══════════
+buildSidebar();
+// Default: first 4 chapters expanded; on small screens only first 2
+const isMobile = window.matchMedia('(max-width: 767px)').matches;
+const expandCount = isMobile ? 2 : 4;
+document.querySelectorAll('.section-card[data-chapter]').forEach((card, i) => {
+  if (i < expandCount) {
+    card.classList.remove('collapsed');
+    expandedChapters.add(card.dataset.chapter);
+  } else {
+    card.classList.add('collapsed');
+  }
+});
+updateProgress();
+
+console.log('🔐 商用密码应用顶层设计方案 v3.0');
+console.log('  快捷键: Ctrl+K 搜索 | Esc 清除搜索');
+console.log('  共22章 + 附录，6大部分');
+console.log('  支持: 章节折叠 | 全文搜索 | 阅读进度追踪 | 打印导出');
+</script>
+</body>
+</html>

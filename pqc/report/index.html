@@ -115,6 +115,36 @@
   /* 代码 */
   code { background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.9em; }
   pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:0.88em; line-height:1.5; }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 768px) {
+    body { padding: 24px 14px; }
+    h1 { font-size: 1.5em; }
+    h2 { font-size: 1.2em; margin: 32px 0 14px; }
+    h3 { font-size: 1.05em; }
+    .stat-row { gap: 8px; }
+    .stat-box { min-width: 100px; padding: 12px 10px; }
+    .stat-num { font-size: 1.5em; }
+    .card { padding: 14px; }
+    table { font-size: 0.82em; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .timeline { padding-left: 24px; }
+    .diagram-box, .mermaid { padding: 10px; }
+  }
+  @media (max-width: 480px) {
+    body { padding: 16px 10px; font-size: 0.9em; }
+    h1 { font-size: 1.25em; }
+    h2 { font-size: 1.08em; margin: 24px 0 10px; }
+    h3 { font-size: 0.95em; }
+    .stat-box { min-width: 72px; padding: 8px 6px; }
+    .stat-num { font-size: 1.2em; }
+    .stat-label { font-size: 0.7em; }
+    .card { padding: 10px 12px; border-radius: 8px; }
+    blockquote { padding: 6px 10px; }
+    ul, ol { margin-left: 16px; }
+    .timeline { padding-left: 20px; }
+    .tl-item::before { left: -18px; width: 8px; height: 8px; }
+    .diagram-box, .mermaid { padding: 6px; border-radius: 6px; }
+  }
 </style>
 </head>
 <body>

@@ -500,6 +500,36 @@
     .hero h1 { background: none; -webkit-text-fill-color: #000; }
     .container { max-width: 100%; }
   }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 900px) {
+    .container { padding: 0 14px; }
+    .hero { padding: 54px 14px 40px; }
+    .hero h1 { font-size: clamp(24px, 7vw, 44px); }
+    .hero .subtitle { font-size: 15px; }
+    .section { padding: 32px 0; }
+    h2 { font-size: 1.3em; }
+  }
+  @media (max-width: 640px) {
+    .container { padding: 0 10px; }
+    .hero { padding: 40px 10px 28px; }
+    .hero-badge { font-size: 11px; padding: 4px 12px; }
+    .hero h1 { font-size: 1.3rem; }
+    .hero .subtitle { font-size: 13px; }
+    .section { padding: 24px 0; }
+    h2 { font-size: 1.15em; }
+    h3 { font-size: 1.05em; }
+    .card { padding: 14px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  }
+  @media (max-width: 420px) {
+    .hero { padding: 28px 8px 20px; }
+    .hero h1 { font-size: 1.1rem; }
+    .hero .subtitle { font-size: 11px; }
+    .section { padding: 18px 0; }
+    h2 { font-size: 1.05em; }
+  }
 </style>
 </head>
 <body>
